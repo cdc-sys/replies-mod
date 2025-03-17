@@ -1,6 +1,9 @@
 #include "Geode/binding/CCMenuItemSpriteExtra.hpp"
 #include "Geode/cocos/layers_scenes_transitions_nodes/CCLayer.h"
+#include "Geode/ui/ScrollLayer.hpp"
 #include "Geode/ui/TextInput.hpp"
+#include "Geode/utils/web.hpp"
+#include "Structs.hpp"
 #include <Geode/Geode.hpp>
 
 using namespace geode::prelude;
@@ -9,9 +12,18 @@ class ReplyLayer : public geode::Popup<std::string const&> {
     std::string m_commentID;
     geode::TextInput* m_replyTextInput;
     CCMenuItemSpriteExtra* m_uploadBtn;
+    geode::ScrollLayer* m_scrollLayer;
+    geode::EventListener<web::WebTask> m_webListener;
+    int m_page=1;
+    int m_maxPages=1;
+    int m_totalReplies=0;
+    GJComment* m_comment;
     bool setup(std::string const& commentID) override;
+    void loadReplies();
+    void populate(std::vector<Reply> const& replies);
+    void onUpload(CCObject* sender);
     public:
     void show() override; 
     void onClose(CCObject*sender) override;
-    static ReplyLayer* create(std::string commentID);
+    static ReplyLayer* create(GJComment* comment);
 };

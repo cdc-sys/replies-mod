@@ -11,7 +11,7 @@ class $modify(MyCommentCell, CommentCell) {
 		bool smallCommentsMode = this->m_height == 36;
 		auto replyLabel = CCSprite::createWithSpriteFrameName("GJ_undoBtn_001.png");
 		auto replyButton = CCMenuItemExt::createSpriteExtra(replyLabel, [comment](CCMenuItemSpriteExtra* btn){
-			auto replyLayer = ReplyLayer::create(fmt::format("{}",comment->m_commentID));
+			auto replyLayer = ReplyLayer::create(comment);
 			replyLayer->show();
 		});
 		auto replyMenu = CCMenu::create(0);
