@@ -24,7 +24,7 @@ bool ReplyCell::init(){
     auto spriteName = fmt::format("reply-{}.png"_spr,(int)this->m_spriteType+1);
     auto sprite = CCSprite::createWithSpriteFrameName(spriteName.c_str());
     sprite->setScale(36.f*m_replyLevel/sprite->getContentWidth());
-    sprite->setOpacity(100);
+    sprite->setOpacity(50);
     sprite->setAnchorPoint({0,0});
     sprite->setPosition({-36.f*m_replyLevel,0});
     this->addChild(sprite);

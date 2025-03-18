@@ -77,6 +77,13 @@ bool ReplyLayer::setup(std::string const& commentID){
     m_scrollLayer->setPosition({20.f,55.f});
     this->m_mainLayer->addChild(m_scrollLayer);
     
+    auto border = CCScale9Sprite::create("geode.loader/inverseborder.png");
+    border->setContentSize(m_scrollLayer->getContentSize());
+    border->ignoreAnchorPointForPosition(true);
+    border->setPosition({20.f,55.f});
+    border->setAnchorPoint({0,0});
+    this->m_mainLayer->addChild(border);
+    
     this->loadReplies();
     return true;
 }
@@ -144,8 +151,13 @@ void ReplyLayer::onUpload(CCObject* sender){
 
 void ReplyLayer::loadReplies(){
     auto req = web::WebRequest();
-    m_webListener.bind([this](web::WebTask::Event* e){
+    auto loadingSpinner = LoadingCircle::create();
+    loadingSpinner->setParentLayer(this->m_mainLayer);
+    loadingSpinner->setContentSize(this->m_mainLayer->getContentSize());
+    loadingSpinner->show();
+    m_webListener.bind([this,loadingSpinner](web::WebTask::Event* e){
         if (auto res = e->getValue()){
+            loadingSpinner->fadeAndRemove();
             if (res->ok()){
                 auto json = res->json().unwrapOrDefault();
                 if (json.contains("replies")){
