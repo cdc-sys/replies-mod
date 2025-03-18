@@ -82,6 +82,7 @@ bool ReplyLayer::setup(std::string const& commentID){
 }
 
 void ReplyLayer::populate(std::vector<Reply> const& replies){
+    float totalHeight = 0.f;
     m_scrollLayer->m_contentLayer->setLayout(
         geode::ColumnLayout::create()
             ->setGap(0.f)
@@ -91,18 +92,24 @@ void ReplyLayer::populate(std::vector<Reply> const& replies){
     );
     auto topCell = ReplyCell::create(replyFromComment(m_comment,m_totalReplies),ReplyBackgroundColor::Highlighted,0);
     m_scrollLayer->m_contentLayer->addChild(topCell);
+    totalHeight += topCell->getContentSize().height;
     int i = 0;
     for (auto reply : replies){
         ReplyCell* cell;
+        ReplySpriteType spriteType = (i+1 == replies.size() ? ReplySpriteType::Curl : ReplySpriteType::Line);
         if (i % 2 == 0){
-            cell = ReplyCell::create(reply,ReplyBackgroundColor::Darker);
+            cell = ReplyCell::create(reply,ReplyBackgroundColor::Darker,1,spriteType);
         } else {
-            cell = ReplyCell::create(reply,ReplyBackgroundColor::Regular);
+            cell = ReplyCell::create(reply,ReplyBackgroundColor::Regular,1,spriteType);
         }
         m_scrollLayer->m_contentLayer->addChild(cell);
+        totalHeight += cell->getContentSize().height;
         i++;
     }
-    m_scrollLayer->m_contentLayer->setContentSize({335.f,(i+1)*36.f});
+    if (totalHeight < m_scrollLayer->getContentHeight()){
+        totalHeight = m_scrollLayer->getContentHeight();
+    }
+    m_scrollLayer->m_contentLayer->setContentSize({335.f,totalHeight});
     m_scrollLayer->m_contentLayer->updateLayout();
     m_scrollLayer->moveToTop();
 }

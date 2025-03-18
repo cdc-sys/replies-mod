@@ -7,6 +7,12 @@ bool ReplyCell::init(){
     if (!CCNode::init()) return false;
     this->setContentSize({335.f-36*m_replyLevel,36.f});
 
+    auto line = CCLayerColor::create();
+    line->setColor({0,0,0});
+    line->setContentSize({this->getContentSize().width,.425f});
+    line->setOpacity(125);
+    this->addChild(line);
+
     auto bg2 = CCLayerColor::create();
     bg2->setColor({0,0,0});
     bg2->setOpacity(120);
@@ -14,6 +20,14 @@ bool ReplyCell::init(){
     bg2->setAnchorPoint({0,0});
     bg2->setPosition({-36.f*m_replyLevel,0});
     this->addChild(bg2);
+    
+    auto spriteName = fmt::format("reply-{}.png"_spr,(int)this->m_spriteType+1);
+    auto sprite = CCSprite::createWithSpriteFrameName(spriteName.c_str());
+    sprite->setScale(36.f*m_replyLevel/sprite->getContentWidth());
+    sprite->setOpacity(100);
+    sprite->setAnchorPoint({0,0});
+    sprite->setPosition({-36.f*m_replyLevel,0});
+    this->addChild(sprite);
 
     auto bg = CCLayerColor::create();
     geode::log::info("{}",(int)m_bgColor);
@@ -62,11 +76,12 @@ bool ReplyCell::init(){
     return true;
 }
 
-ReplyCell* ReplyCell::create(Reply reply,ReplyBackgroundColor bgColor, int replyLevel){
+ReplyCell* ReplyCell::create(Reply reply,ReplyBackgroundColor bgColor, int replyLevel,ReplySpriteType spriteType){
     auto ret = new ReplyCell();
     ret->m_reply = reply;
     ret->m_bgColor = bgColor;
     ret->m_replyLevel = replyLevel;
+    ret->m_spriteType = spriteType;
     if (ret && ret->init()) {
         ret->autorelease();
         return ret;

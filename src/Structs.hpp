@@ -15,7 +15,7 @@ struct IconData {
 struct Reply {
     std::string content;
     int64_t author_id;
-    std::string author_name="Firee";
+    std::string author_name;
     int64_t timestamp;
     std::string id;
     int64_t likes;
@@ -31,9 +31,9 @@ struct matjson::Serialize<IconData>
         IconData icon = IconData();
         icon.id = value["id"].asInt().unwrapOr(0);
         icon.type = value["type"].asInt().unwrapOr(0);
-        icon.primaryColor = value["primaryColor"].asInt().unwrapOr(0);
-        icon.secondaryColor = value["secondaryColor"].asInt().unwrapOr(0);
-        icon.glowColor = value["glowColor"].asInt().unwrapOr(0);
+        icon.primaryColor = value["primary_color"].asInt().unwrapOr(0);
+        icon.secondaryColor = value["secondary_color"].asInt().unwrapOr(0);
+        icon.glowColor = value["glow_color"].asInt().unwrapOr(0);
         icon.glow = value["glow"].asBool().unwrapOr(false);
         return Ok(icon);
     }
@@ -41,9 +41,9 @@ struct matjson::Serialize<IconData>
         auto obj = matjson::Value();
         obj["id"] = value.id;
         obj["type"] = value.type;
-        obj["primaryColor"] = value.primaryColor;
-        obj["secondaryColor"] = value.secondaryColor;
-        obj["glowColor"] = value.glowColor;
+        obj["primary_color"] = value.primaryColor;
+        obj["secondary_color"] = value.secondaryColor;
+        obj["glow_color"] = value.glowColor;
         obj["glow"] = value.glow;
         return obj;
     }
@@ -57,6 +57,7 @@ struct matjson::Serialize<Reply>
         Reply reply = Reply();
         reply.content = value["content"].asString().unwrapOr("");
         reply.author_id = value["author_id"].asInt().unwrapOr(0);
+        reply.author_name = value["author_name"].asString().unwrapOr("");
         reply.timestamp = value["timestamp"].asInt().unwrapOr(0);
         reply.id = value["id"].asString().unwrapOr("");
         reply.likes = value["likes"].asInt().unwrapOr(0);
@@ -70,6 +71,7 @@ struct matjson::Serialize<Reply>
         auto obj = matjson::Value();
         obj["content"] = value.content;
         obj["author_id"] = value.author_id;
+        obj["author_name"] = value.author_name;
         obj["timestamp"] = value.timestamp;
         obj["id"] = value.id;
         obj["likes"] = value.likes;

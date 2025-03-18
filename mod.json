@@ -10,5 +10,14 @@
 	"name": "Replies",
 	"version": "v1.0.0",
 	"developer": "cdc",
-	"description": ""
+	"description": "",
+	"resources": {
+		"spritesheets": {
+			"replySheet_001":[
+				"resources/reply-1.png",
+				"resources/reply-2.png",
+				"resources/reply-3.png"
+			]
+		}
+	}
 }
