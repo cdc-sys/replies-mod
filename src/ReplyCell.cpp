@@ -5,7 +5,8 @@
 
 bool ReplyCell::init(){
     if (!CCNode::init()) return false;
-    this->setContentSize({335.f-36*m_replyLevel,36.f});
+    float offset = 36*m_replyLevel;
+    this->setContentSize({335.f-offset,36.f});
 
     auto line = CCLayerColor::create();
     line->setColor({0,0,0});
@@ -16,18 +17,21 @@ bool ReplyCell::init(){
     auto bg2 = CCLayerColor::create();
     bg2->setColor({0,0,0});
     bg2->setOpacity(120);
-    bg2->setContentSize({36.f*m_replyLevel,this->getContentSize().height});
+    bg2->setContentSize({offset,this->getContentSize().height});
     bg2->setAnchorPoint({0,0});
-    bg2->setPosition({-36.f*m_replyLevel,0});
+    bg2->setPosition({-offset,0});
     this->addChild(bg2);
     
-    auto spriteName = fmt::format("reply-{}.png"_spr,(int)this->m_spriteType+1);
-    auto sprite = CCSprite::createWithSpriteFrameName(spriteName.c_str());
-    sprite->setScale(36.f*m_replyLevel/sprite->getContentWidth());
-    sprite->setOpacity(50);
-    sprite->setAnchorPoint({0,0});
-    sprite->setPosition({-36.f*m_replyLevel,0});
-    this->addChild(sprite);
+    for (int i = 0; i<m_replyLevel; i++){
+
+        auto spriteName = fmt::format("reply-{}.png"_spr,(i>0 ? 1 : (int)this->m_spriteType+1));
+        auto sprite = CCSprite::createWithSpriteFrameName(spriteName.c_str());
+        sprite->setScale(36/sprite->getContentWidth());
+        sprite->setOpacity(50);
+        sprite->setAnchorPoint({0,0});
+        sprite->setPosition({-36.f*(i+1),0});
+        this->addChild(sprite);
+    }
 
     auto bg = CCLayerColor::create();
     geode::log::info("{}",(int)m_bgColor);

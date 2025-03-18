@@ -21,6 +21,7 @@ struct Reply {
     int64_t likes;
     int64_t reply_count;
     IconData icon;
+    std::vector<Reply> replies;
 };
 
 template <>
@@ -65,6 +66,7 @@ struct matjson::Serialize<Reply>
         if (value.contains("icon")){
             reply.icon = value["icon"].as<IconData>().unwrapOrDefault();
         }
+        reply.replies = value["replies"].as<std::vector<Reply>>().unwrapOrDefault();
         return Ok(reply);
     }
     static matjson::Value toJson(Reply const &value){
