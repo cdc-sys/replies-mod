@@ -59,8 +59,6 @@ bool ReplyCell::init(){
     bg->setContentSize(this->getContentSize());
     this->addChild(bg);
 
-    return true;
-
     auto playerIcon = SimplePlayer::create(m_reply.icon.type);
     playerIcon->setPosition({5.f,4.f});
     playerIcon->setScale(0.9f);
@@ -84,7 +82,7 @@ bool ReplyCell::init(){
     contentLabel->setPosition({36.f,13.f});
     contentLabel->setScale(0.65f);
     this->addChild(contentLabel);
-    
+
     auto dateLabel = CCLabelBMFont::create(toAgoString(m_reply.timestamp/1000).c_str(),"chatFont.fnt");
     dateLabel->setAlignment(kCCTextAlignmentRight);
     dateLabel->setAnchorPoint({1,0});
