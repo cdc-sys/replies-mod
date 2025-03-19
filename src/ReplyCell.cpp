@@ -1,7 +1,13 @@
 #include "ReplyCell.hpp"
 #include "GUI/CCControlExtension/CCScale9Sprite.h"
+#include "Geode/binding/CCMenuItemSpriteExtra.hpp"
 #include "Geode/cocos/label_nodes/CCLabelBMFont.h"
 #include "Structs.hpp"
+
+void ReplyCell::onReply(CCObject* sender){
+    auto rl = ReplyLayer::create(m_reply);
+    rl->show();
+}
 
 bool ReplyCell::init(){
     if (!CCNode::init()) return false;
@@ -22,7 +28,7 @@ bool ReplyCell::init(){
     bg2->setPosition({-offset,0});
     this->addChild(bg2);
     
-    for (int i = 0; i<m_replyLevel; i++){
+    for (int i = 0; i<m_replyLevel-m_skipLines; i++){
 
         auto spriteName = fmt::format("reply-{}.png"_spr,(i>0 ? 1 : (int)this->m_spriteType+1));
         auto sprite = CCSprite::createWithSpriteFrameName(spriteName.c_str());
@@ -64,12 +70,6 @@ bool ReplyCell::init(){
     }
     this->addChild(playerIcon);
 
-    auto contentLabel = CCLabelBMFont::create(m_reply.content.c_str(),"chatFont.fnt",200.f,kCCTextAlignmentLeft);
-    contentLabel->setAnchorPoint({0,0.5});
-    contentLabel->setPosition({36.f,13.f});
-    contentLabel->setScale(0.65f);
-    this->addChild(contentLabel);
-
     auto authorLabel = CCLabelBMFont::create(m_reply.author_name.c_str(),"goldFont.fnt");
     authorLabel->setAlignment(kCCTextAlignmentLeft);
     authorLabel->setAnchorPoint({0,0.5});
@@ -77,15 +77,40 @@ bool ReplyCell::init(){
     authorLabel->setScale(0.5f);
     this->addChild(authorLabel);
 
+    auto contentLabel = CCLabelBMFont::create(m_reply.content.c_str(),"chatFont.fnt",200.f,kCCTextAlignmentLeft);
+    contentLabel->setAnchorPoint({0,0.5});
+    contentLabel->setPosition({36.f,13.f});
+    contentLabel->setScale(0.65f);
+    this->addChild(contentLabel);
+    
+    auto dateLabel = CCLabelBMFont::create(toAgoString(m_reply.timestamp/1000).c_str(),"chatFont.fnt");
+    dateLabel->setAlignment(kCCTextAlignmentRight);
+    dateLabel->setAnchorPoint({1,0});
+    dateLabel->setPosition({this->getContentWidth()-5.f,2.f});
+    dateLabel->setScale(0.45f);
+    dateLabel->setColor({0,0,0});
+    dateLabel->setOpacity(125);
+    this->addChild(dateLabel);
+
+    auto replySpr = CCSprite::createWithSpriteFrameName("GJ_undoBtn_001.png");
+    replySpr->setScale(.45f);
+    auto replyBtn = CCMenuItemSpriteExtra::create(replySpr,this,menu_selector(ReplyCell::onReply));
+    auto replyMenu = CCMenu::create();
+    replyMenu->addChild(replyBtn);
+    replyMenu->setPosition({0,0});
+    replyBtn->setPosition({this->getContentWidth()-25.f,this->getContentHeight()/2});
+    this->addChild(replyMenu);
+
     return true;
 }
 
-ReplyCell* ReplyCell::create(Reply reply,ReplyBackgroundColor bgColor, int replyLevel,ReplySpriteType spriteType){
+ReplyCell* ReplyCell::create(Reply reply,ReplyBackgroundColor bgColor, int replyLevel,ReplySpriteType spriteType, int skipLines){
     auto ret = new ReplyCell();
     ret->m_reply = reply;
     ret->m_bgColor = bgColor;
     ret->m_replyLevel = replyLevel;
     ret->m_spriteType = spriteType;
+    ret->m_skipLines = skipLines;
     if (ret && ret->init()) {
         ret->autorelease();
         return ret;

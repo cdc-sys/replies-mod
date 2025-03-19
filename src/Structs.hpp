@@ -1,6 +1,9 @@
 #pragma once
 #include "Geode/Enums.hpp"
 #include <Geode/Geode.hpp>
+#include <chrono>
+#include <ctime>
+#include <iomanip>
 #include <matjson.hpp>
 
 using namespace geode::prelude;
@@ -102,4 +105,44 @@ inline Reply replyFromComment(GJComment* comment,int replies=0){
     reply.icon.glowColor = comment->m_userScore->m_color3;
     reply.icon.glow = comment->m_userScore->m_glowEnabled;
     return reply;
+}
+
+inline std::string toAgoString(int timestamp) {
+    auto const fmtPlural = [](auto count, auto unit) {
+        if (count == 1) {
+            return fmt::format("{} {} ago", count, unit);
+        }
+        return fmt::format("{} {}s ago", count, unit);
+    };
+    auto value = std::chrono::seconds(timestamp);
+    auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
+    auto len = std::chrono::duration_cast<std::chrono::seconds>(now - value).count();
+    if (len < 60) {
+        return fmtPlural(len, "second");
+    }
+    len = std::chrono::duration_cast<std::chrono::minutes>(now - value).count();
+    if (len < 60) {
+        return fmtPlural(len, "minute");
+    }
+    len = std::chrono::duration_cast<std::chrono::hours>(now - value).count();
+    if (len < 24) {
+        return fmtPlural(len, "hour");
+    }
+    len = std::chrono::duration_cast<std::chrono::days>(now - value).count();
+    if (len < 31) {
+        return fmtPlural(len, "day");
+    }
+    len = std::chrono::duration_cast<std::chrono::weeks>(now - value).count();
+    if (len < 4) {
+        return fmtPlural(len, "week");
+    }
+    len = std::chrono::duration_cast<std::chrono::months>(now - value).count();
+    if (len < 12) {
+        return fmtPlural(len, "month");
+    }
+    len = std::chrono::duration_cast<std::chrono::years>(now - value).count();
+    if (len >= 1) {
+        return fmtPlural(len, "year");
+    }
+    return fmt::format("brokey");
 }

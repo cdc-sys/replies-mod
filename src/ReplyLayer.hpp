@@ -1,3 +1,4 @@
+#pragma once
 #include "Geode/binding/CCMenuItemSpriteExtra.hpp"
 #include "Geode/cocos/layers_scenes_transitions_nodes/CCLayer.h"
 #include "Geode/ui/ScrollLayer.hpp"
@@ -18,12 +19,16 @@ class ReplyLayer : public geode::Popup<std::string const&> {
     int m_maxPages=1;
     int m_totalReplies=0;
     GJComment* m_comment;
+    Reply m_reply;
     bool setup(std::string const& commentID) override;
     void loadReplies();
-    void populate(std::vector<Reply> const& replies);
+    void populate(std::vector<Reply> const& replies,std::string const& message="");
     void onUpload(CCObject* sender);
+    float iterate(Reply reply,int replyLevel,Reply parentReply={});
     public:
+    bool _m_darker;
     void show() override; 
     void onClose(CCObject*sender) override;
     static ReplyLayer* create(GJComment* comment);
+    static ReplyLayer* create(Reply reply);
 };

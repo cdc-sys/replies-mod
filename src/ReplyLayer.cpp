@@ -23,6 +23,19 @@ ReplyLayer* ReplyLayer::create(GJComment* comment) {
     return nullptr;
 }
 
+ReplyLayer* ReplyLayer::create(Reply reply) {
+    auto ret = new ReplyLayer();
+    ret->m_commentID = reply.id;
+    ret->m_comment = nullptr;
+    ret->m_reply = reply;
+    if (ret && ret->initAnchored(375, 290,reply.id)) {
+        ret->autorelease();
+        return ret;
+    }
+    CC_SAFE_DELETE(ret);
+    return nullptr;
+}
+
 void ReplyLayer::show(){
     auto winSize = CCDirector::sharedDirector()->getWinSize();
     CCScene::get()->addChild(this);
@@ -88,7 +101,35 @@ bool ReplyLayer::setup(std::string const& commentID){
     return true;
 }
 
-void ReplyLayer::populate(std::vector<Reply> const& replies){
+float ReplyLayer::iterate(Reply reply,int replyLevel, Reply parentReply){
+    float total = 0.f; 
+    int i2 = 0;
+    bool _prevNested;
+    for (auto reply_ : reply.replies){
+        ReplySpriteType spriteType = (i2+1 == reply.replies.size() ? ReplySpriteType::Curl : ReplySpriteType::Line);
+        //int toSkip = (i2+1 == reply.replies.size()&&parentReply.replies.size()==1 ? replyLevel-1 : 0);
+        int toSkip = 0;
+        if (reply_.replies.size() > 0&&!(i2+1 == reply.replies.size())){
+            spriteType = ReplySpriteType::LineCurl;
+        }
+        if (_prevNested&&!(i2+1 == reply.replies.size())){
+            spriteType = LineCurl;
+            _prevNested = false;
+        }
+        auto replyCell = ReplyCell::create(reply_,(this->_m_darker ? ReplyBackgroundColor::Darker : ReplyBackgroundColor::Regular),replyLevel,spriteType,toSkip);
+        m_scrollLayer->m_contentLayer->addChild(replyCell);
+        total += replyCell->getContentHeight();
+        this->_m_darker = !this->_m_darker;
+        total += iterate(reply_,replyLevel+1,reply);
+        if (reply_.replies.size() > 0){
+            _prevNested = true;
+        }
+        i2++;
+    }
+    return total;
+}
+
+void ReplyLayer::populate(std::vector<Reply> const& replies,std::string const& message){
     float totalHeight = 0.f;
     m_scrollLayer->m_contentLayer->setLayout(
         geode::ColumnLayout::create()
@@ -97,38 +138,27 @@ void ReplyLayer::populate(std::vector<Reply> const& replies){
             ->setAxisAlignment(geode::AxisAlignment::End)
             ->setCrossAxisLineAlignment(geode::AxisAlignment::End)
     );
-    auto topCell = ReplyCell::create(replyFromComment(m_comment,m_totalReplies),ReplyBackgroundColor::Highlighted,0);
+    Reply topReply;
+    if (m_comment) topReply = replyFromComment(m_comment,m_totalReplies);
+    else topReply = m_reply;
+    auto topCell = ReplyCell::create(topReply,ReplyBackgroundColor::Highlighted,0);
     m_scrollLayer->m_contentLayer->addChild(topCell);
     totalHeight += topCell->getContentSize().height;
-    bool darker = true;
-    int i = 0;
-    bool _prevNested = false;
-    for (auto reply : replies){
-        ReplySpriteType spriteType = (i+1 == replies.size() ? ReplySpriteType::Curl : ReplySpriteType::Line);
-        if (reply.replies.size() > 0){
-            spriteType = ReplySpriteType::LineCurl;
-        }
-        if (_prevNested){
-            spriteType = ReplySpriteType::LineCurl;
-            _prevNested = false;
-        }
-        ReplyCell* cell = ReplyCell::create(reply,(darker ? ReplyBackgroundColor::Darker : ReplyBackgroundColor::Regular),1,spriteType);
-        m_scrollLayer->m_contentLayer->addChild(cell);
-        totalHeight += cell->getContentSize().height;
-        darker = !darker;
-        int i2 = 0;
-        for (auto reply_ : reply.replies){
-            spriteType = (i2+1 == reply.replies.size() ? ReplySpriteType::Curl : ReplySpriteType::Line);
-            auto replyCell = ReplyCell::create(reply_,(darker ? ReplyBackgroundColor::Darker : ReplyBackgroundColor::Regular),2,spriteType);
-            m_scrollLayer->m_contentLayer->addChild(replyCell);
-            totalHeight += replyCell->getContentSize().height;
-            darker = !darker;
-            i2++;
-            _prevNested=true;
-        }
-        i++;
-    }
+    this->_m_darker = true;
+    Reply fakeReply;
+    fakeReply.replies = replies;
+    totalHeight += iterate(fakeReply,1);
     if (totalHeight < m_scrollLayer->getContentHeight()){
+        auto filler = CCLayerColor::create();
+        filler->setContentSize({335.f,m_scrollLayer->getContentHeight()-totalHeight});
+        filler->setColor({0,0,0});
+        filler->setOpacity(120);
+        if (!message.empty()){
+            auto label = CCLabelBMFont::create(message.c_str(),"goldFont.fnt");
+            label->setScale(.5f);
+            filler->addChildAtPosition(label,Anchor::Center);
+        }
+        m_scrollLayer->m_contentLayer->addChild(filler);
         totalHeight = m_scrollLayer->getContentHeight();
     }
     m_scrollLayer->m_contentLayer->setContentSize({335.f,totalHeight});
@@ -192,10 +222,11 @@ void ReplyLayer::loadReplies(){
                     auto error = json["err"]["text"].asString().unwrapOr("");
                     if (error == "Invalid page." && this->m_page == 1){
                         geode::log::error("No replies for this comment :(");
-                        this->populate({});
+                        this->populate({},"No replies.");
                     }
                 } else {
                     geode::log::error("Failed to load replies: {}",res->string().unwrapOr("Unknown"));
+                    this->populate({},"Something went wrong.");
                 }
             }
         }
