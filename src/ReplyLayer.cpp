@@ -103,28 +103,27 @@ bool ReplyLayer::setup(std::string const& commentID){
 
 float ReplyLayer::iterate(Reply reply,int replyLevel, Reply parentReply){
     float total = 0.f; 
-    int i2 = 0;
-    bool _prevNested;
+    int i = 0;
+    bool prevNested;
     for (auto reply_ : reply.replies){
-        ReplySpriteType spriteType = (i2+1 == reply.replies.size() ? ReplySpriteType::Curl : ReplySpriteType::Line);
+        bool last = (i+1 == reply.replies.size());
+        ReplySpriteType spriteType = (last ? ReplySpriteType::Curl : ReplySpriteType::Line);
         //int toSkip = (i2+1 == reply.replies.size()&&parentReply.replies.size()==1 ? replyLevel-1 : 0);
         int toSkip = 0;
-        if (reply_.replies.size() > 0&&!(i2+1 == reply.replies.size())){
-            spriteType = ReplySpriteType::LineCurl;
+        if (reply_.replies.size() > 0){
+            if (!last) spriteType = ReplySpriteType::LineCurl;
+            prevNested = true;
         }
-        if (_prevNested&&!(i2+1 == reply.replies.size())){
-            spriteType = LineCurl;
-            _prevNested = false;
+        if (prevNested&&!last){
+            spriteType = ReplySpriteType::LineCurl;
+            prevNested = false;
         }
         auto replyCell = ReplyCell::create(reply_,(this->_m_darker ? ReplyBackgroundColor::Darker : ReplyBackgroundColor::Regular),replyLevel,spriteType,toSkip);
         m_scrollLayer->m_contentLayer->addChild(replyCell);
         total += replyCell->getContentHeight();
         this->_m_darker = !this->_m_darker;
         total += iterate(reply_,replyLevel+1,reply);
-        if (reply_.replies.size() > 0){
-            _prevNested = true;
-        }
-        i2++;
+        i++;
     }
     return total;
 }

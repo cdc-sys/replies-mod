@@ -59,6 +59,8 @@ bool ReplyCell::init(){
     bg->setContentSize(this->getContentSize());
     this->addChild(bg);
 
+    return true;
+
     auto playerIcon = SimplePlayer::create(m_reply.icon.type);
     playerIcon->setPosition({5.f,4.f});
     playerIcon->setScale(0.9f);
