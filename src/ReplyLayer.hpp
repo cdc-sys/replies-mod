@@ -24,7 +24,7 @@ class ReplyLayer : public geode::Popup<std::string const&> {
     void loadReplies();
     void populate(std::vector<Reply> const& replies,std::string const& message="");
     void onUpload(CCObject* sender);
-    float iterate(Reply reply,int replyLevel,Reply parentReply={});
+    float iterate(Reply reply,int replyLevel,Reply parentReply={},int skip=0);
     public:
     bool _m_darker;
     void show() override; 

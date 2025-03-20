@@ -100,29 +100,38 @@ bool ReplyLayer::setup(std::string const& commentID){
     this->loadReplies();
     return true;
 }
-
-float ReplyLayer::iterate(Reply reply,int replyLevel, Reply parentReply){
+bool isLastInTree(Reply reply){
+    bool ret = false;
+    if (reply.parent){
+        auto parentReplies = (*reply.parent).replies;
+        if (parentReplies[parentReplies.size()-1].id != reply.id) return false;
+        ret = isLastInTree(*reply.parent);
+    } else return true;
+    return ret;
+}
+float ReplyLayer::iterate(Reply reply,int replyLevel, Reply parentReply,int skip){
     float total = 0.f; 
     int i = 0;
-    bool prevNested;
+    bool prevNested=false;
     for (auto reply_ : reply.replies){
         bool last = (i+1 == reply.replies.size());
+        reply_.last = true;
+        reply_.parent = &reply;
         ReplySpriteType spriteType = (last ? ReplySpriteType::Curl : ReplySpriteType::Line);
-        //int toSkip = (i2+1 == reply.replies.size()&&parentReply.replies.size()==1 ? replyLevel-1 : 0);
-        int toSkip = 0;
-        if (reply_.replies.size() > 0){
-            if (!last) spriteType = ReplySpriteType::LineCurl;
+        if (reply_.replies.size() != 0){
+            if (!isLastInTree(reply_)) spriteType = ReplySpriteType::LineCurl;
             prevNested = true;
         }
         if (prevNested&&!last){
             spriteType = ReplySpriteType::LineCurl;
             prevNested = false;
         }
-        auto replyCell = ReplyCell::create(reply_,(this->_m_darker ? ReplyBackgroundColor::Darker : ReplyBackgroundColor::Regular),replyLevel,spriteType,toSkip);
+        auto replyCell = ReplyCell::create(reply_,(this->_m_darker ? ReplyBackgroundColor::Darker : ReplyBackgroundColor::Regular),replyLevel,spriteType,skip);
         m_scrollLayer->m_contentLayer->addChild(replyCell);
         total += replyCell->getContentHeight();
         this->_m_darker = !this->_m_darker;
-        total += iterate(reply_,replyLevel+1,reply);
+        if (last&&isLastInTree(reply_)) skip += 1;
+        total += iterate(reply_,replyLevel+1,reply,skip);
         i++;
     }
     return total;

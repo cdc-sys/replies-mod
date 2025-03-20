@@ -25,6 +25,8 @@ struct Reply {
     int64_t reply_count;
     IconData icon;
     std::vector<Reply> replies;
+    bool last=false;
+    Reply* parent=nullptr;
 };
 
 template <>

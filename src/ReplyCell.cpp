@@ -33,6 +33,7 @@ bool ReplyCell::init(){
         auto spriteName = fmt::format("reply-{}.png"_spr,(i>0 ? 1 : (int)this->m_spriteType+1));
         auto sprite = CCSprite::createWithSpriteFrameName(spriteName.c_str());
         sprite->setScale(36/sprite->getContentWidth());
+        //sprite->setScale(4.f);
         sprite->setOpacity(50);
         sprite->setAnchorPoint({0,0});
         sprite->setPosition({-36.f*(i+1),0});
@@ -40,7 +41,6 @@ bool ReplyCell::init(){
     }
 
     auto bg = CCLayerColor::create();
-    geode::log::info("{}",(int)m_bgColor);
     switch (m_bgColor){
         case ReplyBackgroundColor::Highlighted: {
             bg->setColor({ 255, 208, 0 });
