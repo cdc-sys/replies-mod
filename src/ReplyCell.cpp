@@ -35,7 +35,7 @@ void ReplyCell::doDelete(){
         }
     });
     auto url = fmt::format("http://localhost:6650/replies/{}/",m_reply.id);
-    req.header("Authorization", "a");
+    req.header("Authorization", Mod::get()->getSavedValue<std::string>("token"));
     this->m_webListener.setFilter(req.send("DELETE", url));
 }
 void ReplyCell::onDelete(CCObject* sender){

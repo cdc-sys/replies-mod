@@ -2,12 +2,14 @@
 #include <Geode/Geode.hpp>
 #include <Geode/utils/web.hpp>
 #include "LoadingOverlay.hpp"
+#include "ReplyLayer.hpp"
 
 using namespace geode::prelude;
 
 class Auth : public cocos2d::CCObject {
     EventListener<web::WebTask> m_webListener;
     web::WebTask m_webTask;
+    ReplyLayer* m_rl;
     void step1();
     void step2(const char* code);
     void handleError(web::WebResponse* res);
@@ -15,5 +17,5 @@ class Auth : public cocos2d::CCObject {
     LoadingOverlay* m_loading;
     void step3();
     void start();
-    static Auth* create();
+    static Auth* create(ReplyLayer* rl);
 };

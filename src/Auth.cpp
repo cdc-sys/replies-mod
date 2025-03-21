@@ -1,6 +1,8 @@
 #include "Auth.hpp"
 #include "Geode/binding/GJAccountManager.hpp"
+#include "Geode/ui/Notification.hpp"
 #include "Geode/utils/web.hpp"
+#include "Geode/modify/MenuLayer.hpp"
 
 class MyUploadDelegate : public UploadMessageDelegate {
     Auth* m_auth;
@@ -48,6 +50,8 @@ void Auth::step3(){
                 auto json = res->json().unwrapOrDefault();
                 if (json.contains("token")){
                     Mod::get()->setSavedValue("token", json["token"].asString().unwrap());
+                    this->m_loading->fadeOut();
+                    this->m_rl->addReplyUI();
                 }
                 this->release();
             } else {
@@ -55,6 +59,7 @@ void Auth::step3(){
             }
         }
     });
+    req.param("id",GJAccountManager::get()->m_accountID);
     m_webTask = req.post("http://localhost:6650/auth/validate");
     m_webListener.setFilter(m_webTask);
 }
@@ -97,8 +102,9 @@ void Auth::start(){
     step1();
 }
 
-Auth* Auth::create(){
+Auth* Auth::create(ReplyLayer* rl){
     Auth* ret = new Auth();
+    ret->m_rl = rl;
     if (ret){
         ret->autorelease();
         return ret;
@@ -106,3 +112,27 @@ Auth* Auth::create(){
     CC_SAFE_DELETE(ret);
     return nullptr;
 }
+
+class $modify(MyMenuLayer,MenuLayer){
+    struct Fields{
+        EventListener<web::WebTask> m_webListener;
+    };
+    bool init(){
+        if (!MenuLayer::init()) return false;
+        if (Mod::get()->getSavedValue<std::string>("token").empty()) return true;
+        auto req = web::WebRequest();
+        this->m_fields->m_webListener.bind([this](web::WebTask::Event* e){
+            if (auto res = e->getValue()){
+                if (!res->ok()){
+                    geode::log::error("{}",res->string().unwrap());
+                    auto notif = geode::Notification::create("[Replies] Unauthorized.",NotificationIcon::Error);
+                    notif->show();
+                    Mod::get()->setSavedValue<std::string>("token","");
+                }
+            }
+        });
+        req.header("Authorization",Mod::get()->getSavedValue<std::string>("token"));
+        this->m_fields->m_webListener.setFilter(req.post("http://localhost:6650/auth/test"));
+        return true;
+    }
+};

@@ -9,6 +9,7 @@
 #include "Geode/ui/TextInput.hpp"
 #include "Geode/utils/cocos.hpp"
 #include "ReplyCell.hpp"
+#include "Auth.hpp"
 #include "Geode/utils/web.hpp"
 #include "Structs.hpp"
 
@@ -51,7 +52,7 @@ void ReplyLayer::show(){
 
 void ReplyLayer::onAuthenticate(CCObject* sender){
     // auth stuff here oaaaaaaaaaaaaaaaaaaaaaaaaaa
-    auto auth = Auth::create();
+    auto auth = Auth::create(this);
     auth->start();
 }
 
@@ -64,6 +65,24 @@ void ReplyLayer::onClose(CCObject* sender){
         )
     );
     this->runAction(cocos2d::CCEaseIn::create(cocos2d::CCFadeTo::create(0.5f,0),3.f));
+}
+
+void ReplyLayer::addReplyUI(){
+    // remove authenticate ui if it exists, because this is only ran in setup and after auth
+    if (authenticateBtn) authenticateBtn->removeFromParent();
+    if (authenticateLabel) authenticateLabel->removeFromParent();
+
+    m_replyTextInput = geode::TextInput::create(280.f,"Type your reply here...","chatFont.fnt");
+    m_replyTextInput->setFilter("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()-_=+[]{};:'\",.<>/?\\|`~ ");
+    m_replyTextInput->setPosition({160.f,30.f});
+    m_replyTextInput->setAnchorPoint({0.5f,0.5f});
+    this->m_mainLayer->addChild(m_replyTextInput);
+
+    auto uploadSpr = CCSprite::createWithSpriteFrameName("GJ_chatBtn_001.png");
+    m_uploadBtn = CCMenuItemSpriteExtra::create(uploadSpr,this,menu_selector(ReplyLayer::onUpload));
+    m_uploadBtn->setPosition({330.f,30.f});
+    uploadSpr->setScale(.825f);
+    this->m_buttonMenu->addChild(m_uploadBtn);
 }
 
 bool ReplyLayer::setup(std::string const& commentID){
@@ -82,19 +101,9 @@ bool ReplyLayer::setup(std::string const& commentID){
     this->m_closeBtn->setPosition({this->m_buttonMenu->getContentSize().width/2,this->m_buttonMenu->getContentSize().height+15.f});
     
     if (!Mod::get()->getSavedValue<std::string>("token").empty()){
-        m_replyTextInput = geode::TextInput::create(280.f,"Type your reply here...","chatFont.fnt");
-        m_replyTextInput->setFilter("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()-_=+[]{};:'\",.<>/?\\|`~ ");
-        m_replyTextInput->setPosition({160.f,30.f});
-        m_replyTextInput->setAnchorPoint({0.5f,0.5f});
-        this->m_mainLayer->addChild(m_replyTextInput);
-
-        auto uploadSpr = CCSprite::createWithSpriteFrameName("GJ_chatBtn_001.png");
-        m_uploadBtn = CCMenuItemSpriteExtra::create(uploadSpr,this,menu_selector(ReplyLayer::onUpload));
-        m_uploadBtn->setPosition({330.f,30.f});
-        uploadSpr->setScale(.825f);
-        this->m_buttonMenu->addChild(m_uploadBtn);
+        this->addReplyUI();
     } else {
-        auto authenticateLabel = CCLabelBMFont::create("To reply to comments you must authenticate.","bigFont.fnt");
+        authenticateLabel = CCLabelBMFont::create("To reply to comments you must authenticate.","bigFont.fnt");
         authenticateLabel->setScale(0.325f);
         authenticateLabel->setAnchorPoint({0,0.5});
         authenticateLabel->setPosition({20,30});
@@ -102,7 +111,7 @@ bool ReplyLayer::setup(std::string const& commentID){
 
         auto authMenu = CCMenu::create();
         auto authenticateSpr = ButtonSprite::create("Login");
-        auto authenticateBtn = CCMenuItemSpriteExtra::create(authenticateSpr,this,menu_selector(ReplyLayer::onAuthenticate));
+        authenticateBtn = CCMenuItemSpriteExtra::create(authenticateSpr,this,menu_selector(ReplyLayer::onAuthenticate));
         authenticateSpr->setScale(.55f);
         authenticateSpr->setAnchorPoint({1,0.5});
         authenticateBtn->setPosition({355,30});
@@ -221,7 +230,7 @@ void ReplyLayer::onUpload(CCObject* sender){
                 }
             }
         });
-        req.header("Authorization", "a");
+        req.header("Authorization", Mod::get()->getSavedValue<std::string>("token"));
         auto url = fmt::format("http://localhost:6650/replies/{}",m_commentID);
         req.param("c",m_replyTextInput->getString());
         m_webListener.setFilter(req.post(url));

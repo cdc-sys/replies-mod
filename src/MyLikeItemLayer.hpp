@@ -34,7 +34,7 @@ class $modify(MyLikeItemLayer,LikeItemLayer){
             }
         });
         auto url = fmt::format("http://localhost:6650/replies/{}/vote",this->m_fields->id);
-        req.header("Authorization", "a");
+        req.header("Authorization", Mod::get()->getSavedValue<std::string>("token"));
         req.param("type",type);
         this->m_fields->m_requestListener.setFilter(req.put(url));
     }
@@ -49,14 +49,9 @@ class $modify(MyLikeItemLayer,LikeItemLayer){
         } else LikeItemLayer::onDislike(sender);
     }
     static MyLikeItemLayer* createWrapper(std::string id,ReplyCell* rc){
-        auto ret = new MyLikeItemLayer();
+        auto ret = static_cast<MyLikeItemLayer*>(LikeItemLayer::create(LikeItemType::Unknown,0,0));
         ret->m_fields->id = id;
         ret->m_fields->rc = rc;
-        if (ret&&ret->init(LikeItemType::Unknown,0,0)){
-            ret->autorelease();
-            return ret;
-        }
-        CC_SAFE_DELETE(ret);
-        return nullptr;
+        return ret;
     }
 };
