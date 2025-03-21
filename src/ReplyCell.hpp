@@ -1,4 +1,8 @@
+#pragma once
 #include <Geode/Geode.hpp>
+#include "Geode/cocos/label_nodes/CCLabelBMFont.h"
+#include <Geode/utils/web.hpp>
+#include "Geode/utils/web.hpp"
 #include "Structs.hpp"
 #include "ReplyLayer.hpp"
 
@@ -17,13 +21,21 @@ enum ReplySpriteType {
 };
 
 class ReplyCell : public CCNode {
-    Reply m_reply;
     ReplyBackgroundColor m_bgColor;
+    ReplyLayer* m_rl;
     int m_replyLevel;
     int m_skipLines;
+    CCSprite* likeSpr;
+    CCLabelBMFont* likeLabel;
+    EventListener<web::WebTask> m_webListener;
     void onReply(CCObject* sender);
-    bool init() override;
+    void onVote(CCObject* sender);
+    void onDelete(CCObject* sender);
+    void doDelete();
+    bool init() override; 
     public:
+    Reply m_reply;
     ReplySpriteType m_spriteType;
-    static ReplyCell* create(Reply reply,ReplyBackgroundColor bgColor=Regular, int replyLevel=1, ReplySpriteType spriteType=Line,int skipLines=0);
+    void updateLikes(int likes);
+    static ReplyCell* create(ReplyLayer* rl,Reply reply,ReplyBackgroundColor bgColor=Regular, int replyLevel=1, ReplySpriteType spriteType=Line,int skipLines=0);
 };

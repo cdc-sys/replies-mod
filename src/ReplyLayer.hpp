@@ -4,6 +4,7 @@
 #include "Geode/ui/ScrollLayer.hpp"
 #include "Geode/ui/TextInput.hpp"
 #include "Geode/utils/web.hpp"
+#include "Auth.hpp"
 #include "Structs.hpp"
 #include <Geode/Geode.hpp>
 
@@ -21,13 +22,14 @@ class ReplyLayer : public geode::Popup<std::string const&> {
     GJComment* m_comment;
     Reply m_reply;
     bool setup(std::string const& commentID) override;
-    void loadReplies();
     void populate(std::vector<Reply> const& replies,std::string const& message="");
     void onUpload(CCObject* sender);
+    void onAuthenticate(CCObject* sender);
     float iterate(Reply reply,int replyLevel,Reply parentReply={},int skip=0);
     public:
     bool _m_darker;
     void show() override; 
+    void loadReplies();
     void onClose(CCObject*sender) override;
     static ReplyLayer* create(GJComment* comment);
     static ReplyLayer* create(Reply reply);

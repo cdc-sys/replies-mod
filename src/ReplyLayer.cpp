@@ -1,5 +1,6 @@
 #include "ReplyLayer.hpp"
 #include "GUI/CCControlExtension/CCScale9Sprite.h"
+#include "Geode/binding/CCMenuItemSpriteExtra.hpp"
 #include "Geode/cocos/actions/CCActionInterval.h"
 #include "Geode/cocos/cocoa/CCObject.h"
 #include "Geode/cocos/label_nodes/CCLabelBMFont.h"
@@ -48,6 +49,12 @@ void ReplyLayer::show(){
     this->runAction(CCFadeTo::create(0.25f,125));
 }
 
+void ReplyLayer::onAuthenticate(CCObject* sender){
+    // auth stuff here oaaaaaaaaaaaaaaaaaaaaaaaaaa
+    auto auth = Auth::create();
+    auth->start();
+}
+
 void ReplyLayer::onClose(CCObject* sender){
     this->m_mainLayer->runAction(
         CCSequence::create(
@@ -73,18 +80,36 @@ bool ReplyLayer::setup(std::string const& commentID){
     this->m_closeBtn->setNormalImage(newSprite);
     this->m_closeBtn->updateSprite();
     this->m_closeBtn->setPosition({this->m_buttonMenu->getContentSize().width/2,this->m_buttonMenu->getContentSize().height+15.f});
+    
+    if (!Mod::get()->getSavedValue<std::string>("token").empty()){
+        m_replyTextInput = geode::TextInput::create(280.f,"Type your reply here...","chatFont.fnt");
+        m_replyTextInput->setFilter("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()-_=+[]{};:'\",.<>/?\\|`~ ");
+        m_replyTextInput->setPosition({160.f,30.f});
+        m_replyTextInput->setAnchorPoint({0.5f,0.5f});
+        this->m_mainLayer->addChild(m_replyTextInput);
 
-    m_replyTextInput = geode::TextInput::create(280.f,"Type your reply here...","chatFont.fnt");
-    m_replyTextInput->setFilter("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()-_=+[]{};:'\",.<>/?\\|`~ ");
-    m_replyTextInput->setPosition({160.f,30.f});
-    m_replyTextInput->setAnchorPoint({0.5f,0.5f});
-    this->m_mainLayer->addChild(m_replyTextInput);
+        auto uploadSpr = CCSprite::createWithSpriteFrameName("GJ_chatBtn_001.png");
+        m_uploadBtn = CCMenuItemSpriteExtra::create(uploadSpr,this,menu_selector(ReplyLayer::onUpload));
+        m_uploadBtn->setPosition({330.f,30.f});
+        uploadSpr->setScale(.825f);
+        this->m_buttonMenu->addChild(m_uploadBtn);
+    } else {
+        auto authenticateLabel = CCLabelBMFont::create("To reply to comments you must authenticate.","bigFont.fnt");
+        authenticateLabel->setScale(0.325f);
+        authenticateLabel->setAnchorPoint({0,0.5});
+        authenticateLabel->setPosition({20,30});
+        this->m_mainLayer->addChild(authenticateLabel);
 
-    auto uploadSpr = CCSprite::createWithSpriteFrameName("GJ_chatBtn_001.png");
-    m_uploadBtn = CCMenuItemSpriteExtra::create(uploadSpr,this,menu_selector(ReplyLayer::onUpload));
-    m_uploadBtn->setPosition({330.f,30.f});
-    uploadSpr->setScale(.825f);
-    this->m_buttonMenu->addChild(m_uploadBtn);
+        auto authMenu = CCMenu::create();
+        auto authenticateSpr = ButtonSprite::create("Login");
+        auto authenticateBtn = CCMenuItemSpriteExtra::create(authenticateSpr,this,menu_selector(ReplyLayer::onAuthenticate));
+        authenticateSpr->setScale(.55f);
+        authenticateSpr->setAnchorPoint({1,0.5});
+        authenticateBtn->setPosition({355,30});
+        authMenu->setPosition({0,0});
+        authMenu->addChild(authenticateBtn);
+        this->m_mainLayer->addChild(authMenu);
+    }
 
     m_scrollLayer = geode::ScrollLayer::create({335.f,200.f});
     m_scrollLayer->setPosition({20.f,55.f});
@@ -126,7 +151,7 @@ float ReplyLayer::iterate(Reply reply,int replyLevel, Reply parentReply,int skip
             spriteType = ReplySpriteType::LineCurl;
             prevNested = false;
         }
-        auto replyCell = ReplyCell::create(reply_,(this->_m_darker ? ReplyBackgroundColor::Darker : ReplyBackgroundColor::Regular),replyLevel,spriteType,skip);
+        auto replyCell = ReplyCell::create(this,reply_,(this->_m_darker ? ReplyBackgroundColor::Darker : ReplyBackgroundColor::Regular),replyLevel,spriteType,skip);
         m_scrollLayer->m_contentLayer->addChild(replyCell);
         total += replyCell->getContentHeight();
         this->_m_darker = !this->_m_darker;
@@ -139,6 +164,7 @@ float ReplyLayer::iterate(Reply reply,int replyLevel, Reply parentReply,int skip
 
 void ReplyLayer::populate(std::vector<Reply> const& replies,std::string const& message){
     float totalHeight = 0.f;
+    m_scrollLayer->m_contentLayer->removeAllChildren();
     m_scrollLayer->m_contentLayer->setLayout(
         geode::ColumnLayout::create()
             ->setGap(0.f)
@@ -149,7 +175,7 @@ void ReplyLayer::populate(std::vector<Reply> const& replies,std::string const& m
     Reply topReply;
     if (m_comment) topReply = replyFromComment(m_comment,m_totalReplies);
     else topReply = m_reply;
-    auto topCell = ReplyCell::create(topReply,ReplyBackgroundColor::Highlighted,0);
+    auto topCell = ReplyCell::create(this,topReply,ReplyBackgroundColor::Highlighted,0);
     m_scrollLayer->m_contentLayer->addChild(topCell);
     totalHeight += topCell->getContentSize().height;
     this->_m_darker = true;

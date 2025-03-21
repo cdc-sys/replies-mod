@@ -96,7 +96,7 @@ inline Reply replyFromComment(GJComment* comment,int replies=0){
     reply.author_id = comment->m_accountID;
     reply.author_name = comment->m_userName;
     reply.timestamp = 0;
-    reply.id = comment->m_commentID;
+    reply.id = fmt::format("{}",comment->m_commentID);
     reply.likes = comment->m_likeCount;
     reply.reply_count = replies;
     if (!comment->m_userScore) return reply;

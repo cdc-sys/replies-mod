@@ -1,12 +1,49 @@
 #include "ReplyCell.hpp"
 #include "GUI/CCControlExtension/CCScale9Sprite.h"
 #include "Geode/binding/CCMenuItemSpriteExtra.hpp"
+#include "Geode/binding/GJAccountManager.hpp"
 #include "Geode/cocos/label_nodes/CCLabelBMFont.h"
+#include "Geode/cocos/menu_nodes/CCMenu.h"
+#include "Geode/ui/SimpleAxisLayout.hpp"
 #include "Structs.hpp"
+#include "MyLikeItemLayer.hpp"
 
 void ReplyCell::onReply(CCObject* sender){
     auto rl = ReplyLayer::create(m_reply);
     rl->show();
+}
+
+void ReplyCell::onVote(CCObject* sender){
+    auto likeLayer = MyLikeItemLayer::createWrapper(this->m_reply.id,this);
+    likeLayer->show();
+}
+void ReplyCell::doDelete(){
+    auto req = web::WebRequest();
+    this->m_webListener.bind([this](web::WebTask::Event* e){
+        if (auto res = e->getValue()) {
+            if (!res->ok()) {
+                auto json = res->json().unwrapOrDefault();
+                if (json.contains("err")){
+                    auto errorText = json["err"]["text"].asString().unwrapOr("Unknown");
+                    auto notif = geode::Notification::create(fmt::format("Failed to delete: {}",errorText),NotificationIcon::Error);
+                    notif->show();
+                }
+            } else {
+                this->removeFromParent();
+                m_rl->loadReplies();
+            }
+        }
+    });
+    auto url = fmt::format("http://localhost:6650/replies/{}/",m_reply.id);
+    req.header("Authorization", "a");
+    this->m_webListener.setFilter(req.send("DELETE", url));
+}
+void ReplyCell::onDelete(CCObject* sender){
+    createQuickPopup("Delete Reply","Are you sure you want to <cr>delete</c> this reply?","No","Yes",[this](auto alert, bool btn2){
+        if (btn2){
+            doDelete();
+        }
+    });
 }
 
 bool ReplyCell::init(){
@@ -77,6 +114,9 @@ bool ReplyCell::init(){
     authorLabel->setScale(0.5f);
     this->addChild(authorLabel);
 
+    // come back to this idea later maybe
+    //if (m_reply.likes < 0) return true;
+
     auto contentLabel = CCLabelBMFont::create(m_reply.content.c_str(),"chatFont.fnt",200.f,kCCTextAlignmentLeft);
     contentLabel->setAnchorPoint({0,0.5});
     contentLabel->setPosition({36.f,13.f});
@@ -93,19 +133,54 @@ bool ReplyCell::init(){
     this->addChild(dateLabel);
 
     auto replySpr = CCSprite::createWithSpriteFrameName("GJ_undoBtn_001.png");
-    replySpr->setScale(.45f);
+    replySpr->setScale(.6f);
     auto replyBtn = CCMenuItemSpriteExtra::create(replySpr,this,menu_selector(ReplyCell::onReply));
-    auto replyMenu = CCMenu::create();
-    replyMenu->addChild(replyBtn);
-    replyMenu->setPosition({0,0});
-    replyBtn->setPosition({this->getContentWidth()-25.f,this->getContentHeight()/2});
-    this->addChild(replyMenu);
+    //auto replyMenu = CCMenu::create();
+    //replyMenu->addChild(replyBtn);
+    //replyMenu->setPosition({0,0});
+    //replyBtn->setPosition({this->getContentWidth()-25.f,this->getContentHeight()/2});
+    //this->addChild(replyMenu);
+
+    auto likeMenu = CCMenu::create();
+    likeSpr = CCSprite::createWithSpriteFrameName((m_reply.likes >= 0 ? "GJ_likesIcon_001.png" : "GJ_dislikesIcon_001.png"));
+    auto likeBtn = CCMenuItemSpriteExtra::create(likeSpr,this,menu_selector(ReplyCell::onVote));
+    likeLabel = CCLabelBMFont::create("0","bigFont.fnt");
+    likeMenu->addChild(likeLabel);
+    likeMenu->addChild(likeBtn);
+    if (m_reply.author_id == GJAccountManager::get()->m_accountID){
+        auto deleteSpr = CCSprite::createWithSpriteFrameName("GJ_deleteIcon_001.png");
+        auto deleteBtn = CCMenuItemSpriteExtra::create(deleteSpr,this,menu_selector(ReplyCell::onDelete));
+        likeMenu->addChild(deleteBtn);
+    }
+    likeMenu->addChild(replyBtn);
+    auto layout = AxisLayout::create(Axis::Row);
+    layout->setAxisReverse(true);
+    layout->setAutoGrowAxis(1.f);
+    layout->setGap(10.f);
+    likeMenu->setLayout(layout);
+    likeMenu->updateLayout();
+
+    // temp code
+    auto cs = likeLabel->getContentWidth();
+    likeLabel->setString(fmt::format("{}",m_reply.likes).c_str());
+    likeLabel->limitLabelWidth(cs, .5f, .01f);
+
+    likeMenu->setAnchorPoint({1,1});
+    likeMenu->setScale(0.5f);
+    this->addChildAtPosition(likeMenu,Anchor::TopRight,{-5,-5});
 
     return true;
 }
 
-ReplyCell* ReplyCell::create(Reply reply,ReplyBackgroundColor bgColor, int replyLevel,ReplySpriteType spriteType, int skipLines){
+void ReplyCell::updateLikes(int likes){
+    likeLabel->setString(fmt::format("{}",likes).c_str());
+    auto temp = CCSprite::createWithSpriteFrameName((likes >= 0 ? "GJ_likesIcon_001.png" : "GJ_dislikesIcon_001.png"));
+    likeSpr->setDisplayFrame(temp->displayFrame());
+}
+
+ReplyCell* ReplyCell::create(ReplyLayer* rl,Reply reply,ReplyBackgroundColor bgColor, int replyLevel,ReplySpriteType spriteType, int skipLines){
     auto ret = new ReplyCell();
+    ret->m_rl = rl;
     ret->m_reply = reply;
     ret->m_bgColor = bgColor;
     ret->m_replyLevel = replyLevel;
