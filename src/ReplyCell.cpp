@@ -167,7 +167,7 @@ bool ReplyCell::init(){
 
     likeMenu->setAnchorPoint({1,1});
     likeMenu->setScale(0.5f);
-    this->addChildAtPosition(likeMenu,Anchor::TopRight,{-5,-5});
+    this->addChildAtPosition(likeMenu,Anchor::TopRight,{-5,-2});
 
     return true;
 }
