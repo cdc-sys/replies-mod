@@ -231,7 +231,8 @@ void ReplyLayer::onUpload(CCObject* sender){
             }
         });
         req.header("Authorization", Mod::get()->getSavedValue<std::string>("token"));
-        auto url = fmt::format("http://localhost:6650/replies/{}",m_commentID);
+        req.header("mod-version",MOD_VERSION_HEADER);
+        auto url = fmt::format("{}/replies/{}",SERVER_URL,m_commentID);
         req.param("c",m_replyTextInput->getString());
         m_webListener.setFilter(req.post(url));
     }
@@ -263,10 +264,7 @@ void ReplyLayer::loadReplies(){
                 auto json = res->json().unwrapOrDefault();
                 if (json.contains("err")){
                     auto error = json["err"]["text"].asString().unwrapOr("");
-                    if (error == "Invalid page." && this->m_page == 1){
-                        geode::log::error("No replies for this comment :(");
-                        this->populate({},"No replies.");
-                    }
+                    this->populate({},error);
                 } else {
                     geode::log::error("Failed to load replies: {}",res->string().unwrapOr("Unknown"));
                     this->populate({},"Something went wrong.");
@@ -274,7 +272,8 @@ void ReplyLayer::loadReplies(){
             }
         }
     });
-    auto url = fmt::format("http://localhost:6650/replies/{}/{}",m_commentID,this->m_page);
+    req.header("mod-version",MOD_VERSION_HEADER);
+    auto url = fmt::format("{}/replies/{}/{}",SERVER_URL,m_commentID,this->m_page);
     geode::log::info("{}",url);
     m_webListener.setFilter(req.get(url));
 }

@@ -17,5 +17,6 @@ class Auth : public cocos2d::CCObject {
     LoadingOverlay* m_loading;
     void step3();
     void start();
+    void send_icons();
     static Auth* create(ReplyLayer* rl);
 };

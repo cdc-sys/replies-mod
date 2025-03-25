@@ -148,3 +148,5 @@ inline std::string toAgoString(int timestamp) {
     }
     return fmt::format("brokey");
 }
+static const std::string SERVER_URL = "https://mmvdhgj8-6650.euw.devtunnels.ms";
+static const std::string MOD_VERSION_HEADER = "testing.1";

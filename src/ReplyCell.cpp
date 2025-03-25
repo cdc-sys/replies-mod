@@ -34,8 +34,9 @@ void ReplyCell::doDelete(){
             }
         }
     });
-    auto url = fmt::format("http://localhost:6650/replies/{}/",m_reply.id);
+    auto url = fmt::format("{}/replies/{}/",SERVER_URL,m_reply.id);
     req.header("Authorization", Mod::get()->getSavedValue<std::string>("token"));
+    req.header("mod-version",MOD_VERSION_HEADER);
     this->m_webListener.setFilter(req.send("DELETE", url));
 }
 void ReplyCell::onDelete(CCObject* sender){
@@ -114,6 +115,11 @@ bool ReplyCell::init(){
     authorLabel->setScale(0.5f);
     this->addChild(authorLabel);
 
+    if (m_reply.reply_count > 0){
+        auto text = fmt::format("{} Repl{}",m_reply.reply_count,(m_reply.reply_count == 1 ? "y" : "ies"));
+        auto replyLabel = CCLabelBMFont::create(text.c_str(),"goldFont.fnt");
+    }
+
     // come back to this idea later maybe
     //if (m_reply.likes < 0) return true;
 
@@ -142,7 +148,12 @@ bool ReplyCell::init(){
     //this->addChild(replyMenu);
 
     auto likeMenu = CCMenu::create();
-    likeSpr = CCSprite::createWithSpriteFrameName((m_reply.likes >= 0 ? "GJ_likesIcon_001.png" : "GJ_dislikesIcon_001.png"));
+    likeSpr = CCSprite::createWithSpriteFrameName("GJ_likesIcon_001.png");
+    if (m_reply.likes < 0) {
+        auto cs = likeSpr->getContentSize();
+        likeSpr = CCSprite::createWithSpriteFrameName("GJ_dislikesIcon_001.png");
+        likeSpr->setContentSize(cs);
+    }
     auto likeBtn = CCMenuItemSpriteExtra::create(likeSpr,this,menu_selector(ReplyCell::onVote));
     likeLabel = CCLabelBMFont::create("0","bigFont.fnt");
     likeMenu->addChild(likeLabel);
@@ -166,16 +177,19 @@ bool ReplyCell::init(){
     likeLabel->limitLabelWidth(cs, .5f, .01f);
 
     likeMenu->setAnchorPoint({1,1});
-    likeMenu->setScale(0.5f);
-    this->addChildAtPosition(likeMenu,Anchor::TopRight,{-5,-2});
+    likeMenu->setScale(0.55f);
+    this->addChildAtPosition(likeMenu,Anchor::TopRight,{-5,-5});
 
     return true;
 }
 
 void ReplyCell::updateLikes(int likes){
     likeLabel->setString(fmt::format("{}",likes).c_str());
-    auto temp = CCSprite::createWithSpriteFrameName((likes >= 0 ? "GJ_likesIcon_001.png" : "GJ_dislikesIcon_001.png"));
+    auto temp = CCSprite::createWithSpriteFrameName("GJ_likesIcon_001.png");
+    auto cs = temp->getContentSize();
+    if (likes < 0) temp = CCSprite::createWithSpriteFrameName("GJ_dislikesIcon_001.png");
     likeSpr->setDisplayFrame(temp->displayFrame());
+    likeSpr->setContentSize(cs);
 }
 
 ReplyCell* ReplyCell::create(ReplyLayer* rl,Reply reply,ReplyBackgroundColor bgColor, int replyLevel,ReplySpriteType spriteType, int skipLines){

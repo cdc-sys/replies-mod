@@ -33,8 +33,9 @@ class $modify(MyLikeItemLayer,LikeItemLayer){
                 this->release();
             }
         });
-        auto url = fmt::format("http://localhost:6650/replies/{}/vote",this->m_fields->id);
+        auto url = fmt::format("{}/replies/{}/vote",SERVER_URL,this->m_fields->id);
         req.header("Authorization", Mod::get()->getSavedValue<std::string>("token"));
+        req.header("mod-version",MOD_VERSION_HEADER);
         req.param("type",type);
         this->m_fields->m_requestListener.setFilter(req.put(url));
     }
