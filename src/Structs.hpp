@@ -24,6 +24,11 @@ struct Reply {
     int64_t likes;
     int64_t reply_count;
     IconData icon;
+
+    // misc
+    bool from_comment=false;
+    bool account_comment=false;
+    std::string comment_timestamp;
     std::vector<Reply> replies;
     bool last=false;
     Reply* parent=nullptr;
@@ -92,20 +97,28 @@ struct matjson::Serialize<Reply>
 
 inline Reply replyFromComment(GJComment* comment,int replies=0){
     Reply reply = Reply();
+    reply.from_comment = true;
+
     reply.content = comment->m_commentString;
     reply.author_id = comment->m_accountID;
     reply.author_name = comment->m_userName;
-    reply.timestamp = 0;
+    reply.comment_timestamp = comment->m_uploadDate;
     reply.id = fmt::format("{}",comment->m_commentID);
     reply.likes = comment->m_likeCount;
     reply.reply_count = replies;
-    if (!comment->m_userScore) return reply;
+
+    if (!comment->m_userScore) {
+        reply.account_comment = true;
+        return reply;
+    }
+
     reply.icon.type = (int)comment->m_userScore->m_iconType;
     reply.icon.id = comment->m_userScore->m_iconID;
     reply.icon.primaryColor = comment->m_userScore->m_color1;
     reply.icon.secondaryColor = comment->m_userScore->m_color2;
-    reply.icon.glowColor = comment->m_userScore->m_color3;
-    reply.icon.glow = comment->m_userScore->m_glowEnabled;
+    reply.icon.glowColor = comment->m_userScore->m_color2;
+    reply.icon.glow = comment->m_userScore->m_special == 2;
+
     return reply;
 }
 
@@ -119,6 +132,9 @@ inline std::string toAgoString(int timestamp) {
     auto value = std::chrono::seconds(timestamp);
     auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
     auto len = std::chrono::duration_cast<std::chrono::seconds>(now - value).count();
+    if (len <= 0){
+        return fmt::format("0 seconds ago");
+    }
     if (len < 60) {
         return fmtPlural(len, "second");
     }
@@ -146,7 +162,7 @@ inline std::string toAgoString(int timestamp) {
     if (len >= 1) {
         return fmtPlural(len, "year");
     }
-    return fmt::format("brokey");
+    return fmt::format("this is the secret string");
 }
 static const std::string SERVER_URL = "https://mmvdhgj8-6650.euw.devtunnels.ms";
-static const std::string MOD_VERSION_HEADER = "testing.1";
+static const std::string MOD_VERSION_HEADER = "testing.2";

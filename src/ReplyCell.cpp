@@ -14,10 +14,12 @@ void ReplyCell::onReply(CCObject* sender){
 }
 
 void ReplyCell::onVote(CCObject* sender){
+    if (m_reply.from_comment) return;
     auto likeLayer = MyLikeItemLayer::createWrapper(this->m_reply.id,this);
     likeLayer->show();
 }
 void ReplyCell::doDelete(){
+    if (m_reply.from_comment) return;
     auto req = web::WebRequest();
     this->m_webListener.bind([this](web::WebTask::Event* e){
         if (auto res = e->getValue()) {
@@ -115,10 +117,10 @@ bool ReplyCell::init(){
     authorLabel->setScale(0.5f);
     this->addChild(authorLabel);
 
-    if (m_reply.reply_count > 0){
+    /*if (m_reply.reply_count > 0){
         auto text = fmt::format("{} Repl{}",m_reply.reply_count,(m_reply.reply_count == 1 ? "y" : "ies"));
         auto replyLabel = CCLabelBMFont::create(text.c_str(),"goldFont.fnt");
-    }
+    }*/
 
     // come back to this idea later maybe
     //if (m_reply.likes < 0) return true;
@@ -129,7 +131,8 @@ bool ReplyCell::init(){
     contentLabel->setScale(0.65f);
     this->addChild(contentLabel);
 
-    auto dateLabel = CCLabelBMFont::create(toAgoString(m_reply.timestamp/1000).c_str(),"chatFont.fnt");
+    std::string timestamp = (m_reply.from_comment ? m_reply.comment_timestamp+" ago" : toAgoString(m_reply.timestamp/1000));
+    auto dateLabel = CCLabelBMFont::create(timestamp.c_str(),"chatFont.fnt");
     dateLabel->setAlignment(kCCTextAlignmentRight);
     dateLabel->setAnchorPoint({1,0});
     dateLabel->setPosition({this->getContentWidth()-5.f,2.f});
@@ -158,12 +161,12 @@ bool ReplyCell::init(){
     likeLabel = CCLabelBMFont::create("0","bigFont.fnt");
     likeMenu->addChild(likeLabel);
     likeMenu->addChild(likeBtn);
-    if (m_reply.author_id == GJAccountManager::get()->m_accountID){
+    if (m_reply.author_id == GJAccountManager::get()->m_accountID&&!m_reply.from_comment){
         auto deleteSpr = CCSprite::createWithSpriteFrameName("GJ_deleteIcon_001.png");
         auto deleteBtn = CCMenuItemSpriteExtra::create(deleteSpr,this,menu_selector(ReplyCell::onDelete));
         likeMenu->addChild(deleteBtn);
     }
-    likeMenu->addChild(replyBtn);
+    if (!m_reply.from_comment) likeMenu->addChild(replyBtn);
     auto layout = AxisLayout::create(Axis::Row);
     layout->setAxisReverse(true);
     layout->setAutoGrowAxis(1.f);

@@ -6,6 +6,7 @@
 #include "Geode/cocos/label_nodes/CCLabelBMFont.h"
 #include "Geode/cocos/layers_scenes_transitions_nodes/CCLayer.h"
 #include "Geode/ui/Layout.hpp"
+#include "Geode/ui/Notification.hpp"
 #include "Geode/ui/TextInput.hpp"
 #include "Geode/utils/cocos.hpp"
 #include "ReplyCell.hpp"
@@ -211,9 +212,11 @@ void ReplyLayer::populate(std::vector<Reply> const& replies,std::string const& m
 
 void ReplyLayer::onUpload(CCObject* sender){
     if (m_replyTextInput->getString().length() > 0){
+        m_uploadBtn->setEnabled(false);
         auto req = web::WebRequest();
         m_webListener.bind([this](web::WebTask::Event* e){
             if (auto res = e->getValue()){
+                m_uploadBtn->setEnabled(true);
                 if (res->ok()){
                     this->m_page = this->m_maxPages;
                     this->m_scrollLayer->m_contentLayer->removeAllChildren();
@@ -222,8 +225,9 @@ void ReplyLayer::onUpload(CCObject* sender){
                 } else {
                     auto json = res->json().unwrapOrDefault();
                     if (json.contains("err")){
-                        auto error = json["err"]["text"].asString().unwrapOr("");
-                        geode::log::error("Failed to post: {}",error);
+                        auto error = json["err"]["text"].asString().unwrapOr("Unknown");
+                        auto notif = geode::Notification::create(fmt::format("Failed to post: {}",error),NotificationIcon::Error);
+                        notif->show();
                     } else {
                         geode::log::error("Failed to load replies: {}",res->string().unwrapOr("Unknown"));
                     }
@@ -242,7 +246,13 @@ void ReplyLayer::loadReplies(){
     auto req = web::WebRequest();
     auto loadingSpinner = LoadingCircle::create();
     loadingSpinner->setParentLayer(this->m_mainLayer);
-    loadingSpinner->setContentSize(this->m_mainLayer->getContentSize());
+    loadingSpinner->setContentSize(this->m_scrollLayer->getContentSize());
+    loadingSpinner->setPosition(this->m_scrollLayer->getPosition());
+
+    // why do i have to do this?
+    auto spinnerSprite = loadingSpinner->m_sprite;
+    spinnerSprite->setPosition({loadingSpinner->getContentWidth()/2,loadingSpinner->getContentHeight()/2});
+
     loadingSpinner->show();
     m_webListener.bind([this,loadingSpinner](web::WebTask::Event* e){
         if (auto res = e->getValue()){
