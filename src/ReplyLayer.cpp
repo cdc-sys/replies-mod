@@ -1,18 +1,6 @@
 #include "ReplyLayer.hpp"
-#include "GUI/CCControlExtension/CCScale9Sprite.h"
-#include "Geode/binding/CCMenuItemSpriteExtra.hpp"
-#include "Geode/cocos/actions/CCActionInterval.h"
-#include "Geode/cocos/cocoa/CCObject.h"
-#include "Geode/cocos/label_nodes/CCLabelBMFont.h"
-#include "Geode/cocos/layers_scenes_transitions_nodes/CCLayer.h"
-#include "Geode/ui/Layout.hpp"
-#include "Geode/ui/Notification.hpp"
-#include "Geode/ui/TextInput.hpp"
-#include "Geode/utils/cocos.hpp"
 #include "ReplyCell.hpp"
 #include "Auth.hpp"
-#include "Geode/utils/web.hpp"
-#include "Structs.hpp"
 
 ReplyLayer* ReplyLayer::create(GJComment* comment) {
     auto ret = new ReplyLayer();

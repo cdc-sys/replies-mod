@@ -1,11 +1,7 @@
 #pragma once
-#include "Geode/binding/CCMenuItemSpriteExtra.hpp"
-#include "Geode/cocos/layers_scenes_transitions_nodes/CCLayer.h"
-#include "Geode/ui/ScrollLayer.hpp"
-#include "Geode/ui/TextInput.hpp"
-#include "Geode/utils/web.hpp"
 #include "Structs.hpp"
 #include <Geode/Geode.hpp>
+#include <Geode/utils/web.hpp>
 
 using namespace geode::prelude;
 
