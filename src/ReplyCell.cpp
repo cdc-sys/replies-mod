@@ -14,9 +14,13 @@ void ReplyCell::onReply(CCObject* sender){
 }
 
 void ReplyCell::onVote(CCObject* sender){
+    #ifndef GEODE_IS_MACOS
     if (m_reply.from_comment) return;
     auto likeLayer = MyLikeItemLayer::createWrapper(this->m_reply.id,this);
     likeLayer->show();
+    #else
+    FLAlertLayer::create("Ooooops","im lazy to do stuff so you don't get like popup on mac rn","okie")->show();
+    #endif
 }
 void ReplyCell::doDelete(){
     if (m_reply.from_comment) return;

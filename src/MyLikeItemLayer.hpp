@@ -8,7 +8,7 @@
 #include "ReplyCell.hpp"
 
 using namespace geode::prelude;
-
+#ifndef GEODE_IS_MACOS
 class $modify(MyLikeItemLayer,LikeItemLayer){
     struct Fields {
         std::string id;
@@ -56,3 +56,4 @@ class $modify(MyLikeItemLayer,LikeItemLayer){
         return ret;
     }
 };
+#endif
