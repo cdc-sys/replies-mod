@@ -14,7 +14,7 @@ class $modify(MyCommentCell, CommentCell) {
 			auto replyLayer = ReplyLayer::create(comment);
 			replyLayer->show();
 		});
-		auto replyMenu = CCMenu::create(0);
+		auto replyMenu = CCMenu::create();
 		if (!smallCommentsMode){
 			replyMenu->setPosition(320,30);
 			replyLabel->setScale(.45f);
