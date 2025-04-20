@@ -181,6 +181,10 @@ class $modify(MyMenuLayer,MenuLayer){
                     auto notif = geode::Notification::create("[Replies] Unauthorized.",NotificationIcon::Error);
                     notif->show();
                     Mod::get()->setSavedValue<std::string>("token","");
+                    // temporary
+                    auto alert = FLAlertLayer::create("Replies Notice","Hello tester, the <cg>auth validation</c> request has failed.\nThis likely means the servers are <cr>currently down</c> (you can still check by opening the reply popup)\nPlease <cr>disable</c> the mod in the <cp>Geode UI</c> until a new test is announced!","OK");
+                    alert->m_scene = this;
+                    alert->show();
                 } else {
                     // kinda evil but hey i already made the func
                     auto auth = Auth::create(nullptr);
