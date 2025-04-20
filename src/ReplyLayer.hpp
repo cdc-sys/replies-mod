@@ -23,6 +23,7 @@ class ReplyLayer : public geode::Popup<std::string const&> {
     void onUpload(CCObject* sender);
     void onAuthenticate(CCObject* sender);
     float iterate(Reply reply,int replyLevel,Reply parentReply={},int skip=0);
+    void onUploadFailed(int code);
     public:
     bool _m_darker;
     void show() override; 

@@ -216,8 +216,10 @@ void ReplyLayer::onUpload(CCObject* sender){
                         auto error = json["err"]["text"].asString().unwrapOr("Unknown");
                         auto notif = geode::Notification::create(fmt::format("Failed to post: {}",error),NotificationIcon::Error);
                         notif->show();
+                        onUploadFailed(json["err"]["code"].asInt().unwrapOrDefault());
                     } else {
                         geode::log::error("Failed to load replies: {}",res->string().unwrapOr("Unknown"));
+                        onUploadFailed(0);
                     }
                 }
             }
@@ -274,4 +276,16 @@ void ReplyLayer::loadReplies(){
     auto url = fmt::format("{}/replies/{}/{}",SERVER_URL,m_commentID,this->m_page);
     geode::log::info("{}",url);
     m_webListener.setFilter(req.get(url));
+}
+
+void ReplyLayer::onUploadFailed(int code){
+    auto pos = m_mainLayer->getPosition();
+    m_mainLayer->setPosition(pos+ccp(25.f,0.f));
+    auto action = CCEaseElasticOut::create(CCMoveTo::create(1,pos),0.3);
+    m_mainLayer->runAction(action);
+    switch (code){
+        case 102:
+            m_replyTextInput->setString("");
+            break;
+    }
 }
