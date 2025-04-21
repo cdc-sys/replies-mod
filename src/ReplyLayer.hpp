@@ -4,7 +4,10 @@
 #include <Geode/utils/web.hpp>
 
 using namespace geode::prelude;
-
+enum class Mode {
+    LargeCells,
+    CompactCells
+};
 class ReplyLayer : public geode::Popup<std::string const&> {
     std::string m_commentID;
     geode::TextInput* m_replyTextInput;
@@ -25,6 +28,7 @@ class ReplyLayer : public geode::Popup<std::string const&> {
     float iterate(Reply reply,int replyLevel,Reply parentReply={},int skip=0);
     void onUploadFailed(int code);
     public:
+    Mode m_displayMode=Mode::CompactCells;
     bool _m_darker;
     void show() override; 
     void loadReplies();

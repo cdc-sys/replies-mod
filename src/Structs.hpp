@@ -72,7 +72,7 @@ struct matjson::Serialize<Reply>
         reply.timestamp = value["timestamp"].asInt().unwrapOr(0);
         reply.id = value["id"].asString().unwrapOr("");
         reply.likes = value["likes"].asInt().unwrapOr(0);
-        reply.reply_count = value["like_count"].asInt().unwrapOr(0);
+        reply.reply_count = value["reply_count"].asInt().unwrapOr(0);
         if (value.contains("icon")){
             reply.icon = value["icon"].as<IconData>().unwrapOrDefault();
         }

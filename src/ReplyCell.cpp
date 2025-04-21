@@ -52,17 +52,53 @@ void ReplyCell::onDelete(CCObject* sender){
         }
     });
 }
+void scaleAreaToFit(SimpleTextArea* area,float max){
+    // cant decide rn, but im keeping the bad version for now..
+    bool scaled = false;
+    while (area->getScaledContentHeight() > max){
+        area->setScale(area->getScale()-0.01f);
+        scaled = true;
+    }
+    if (scaled) {
+        if (area->getLines().size() == 1){
+            area->setPositionY(area->getPositionY()-area->getScaledContentHeight()/4);
+        }
+    }
+    /*if (area->getLines().size()==1)return;
+    float height = area->getLineHeight();
+    float padding = area->getLinePadding();
+    float total = height+padding;
+    int max_lines = std::ceil(max/total);
+    int area_lines = area->getLines().size();
+    float a = max_lines*height;
+    float c = a/area_lines;
+    float offset = 0;
+    if (max_lines==area_lines) offset = (max_lines-1)*0.2f;
+    area->setScale((c/height)*area->getScale()-offset);
+    if (area->getLines().size() == 1){
+        area->setPositionY(area->getPositionY()-area->getScaledContentHeight()/4);
+    }*/
 
+}
 bool ReplyCell::init(){
     if (!CCNode::init()) return false;
     float offset = 36*m_replyLevel;
     this->setContentSize({335.f-offset,36.f});
+    if (m_rl->m_displayMode==Mode::LargeCells){
+        this->setContentHeight(90.f);
+    }
 
     auto line = CCLayerColor::create();
     line->setColor({0,0,0});
     line->setContentSize({this->getContentSize().width,.425f});
     line->setOpacity(125);
     this->addChild(line);
+
+    auto line2 = CCLayerColor::create();
+    line2->setColor({0,0,0});
+    line2->setContentSize({.425f,this->getContentHeight()});
+    line2->setOpacity(125);
+    this->addChild(line2);
 
     auto bg2 = CCLayerColor::create();
     bg2->setColor({0,0,0});
@@ -102,37 +138,58 @@ bool ReplyCell::init(){
     bg->setOpacity(50);
     bg->setContentSize(this->getContentSize());
     this->addChild(bg);
-
-    auto playerIcon = SimplePlayer::create(m_reply.icon.type);
-    playerIcon->setPosition({5.f,4.f});
-    playerIcon->setScale(0.9f);
-    playerIcon->setColors(GameManager::get()->colorForIdx(m_reply.icon.primaryColor), GameManager::get()->colorForIdx(m_reply.icon.secondaryColor));
-    playerIcon->updatePlayerFrame(m_reply.icon.id, (IconType)m_reply.icon.type);
-    if (m_reply.icon.glow) playerIcon->setGlowOutline(GameManager::get()->colorForIdx(m_reply.icon.glowColor));
-    for (auto child : CCArrayExt<CCNode*>(playerIcon->getChildren())){
-        child->ignoreAnchorPointForPosition(true);
+    
+    float playerIconOffset = 0.f;
+    if (!m_reply.account_comment){
+        auto playerIcon = SimplePlayer::create(m_reply.icon.type);
+        playerIcon->setPosition({5.f,this->getContentHeight()-(30.f*0.45f)-4.f});
+        playerIcon->setScale(0.45f);
+        playerIcon->setColors(GameManager::get()->colorForIdx(m_reply.icon.primaryColor), GameManager::get()->colorForIdx(m_reply.icon.secondaryColor));
+        playerIcon->updatePlayerFrame(m_reply.icon.id, (IconType)m_reply.icon.type);
+        if (m_reply.icon.glow) playerIcon->setGlowOutline(GameManager::get()->colorForIdx(m_reply.icon.glowColor));
+        for (auto child : CCArrayExt<CCNode*>(playerIcon->getChildren())){
+            child->ignoreAnchorPointForPosition(true);
+        }
+        this->addChild(playerIcon);
+        playerIconOffset = 30.f*0.45f;
     }
-    this->addChild(playerIcon);
 
     auto authorLabel = CCLabelBMFont::create(m_reply.author_name.c_str(),"goldFont.fnt");
     authorLabel->setAlignment(kCCTextAlignmentLeft);
     authorLabel->setAnchorPoint({0,0.5});
-    authorLabel->setPosition({36.f,26.f});
+    authorLabel->setPosition({playerIconOffset+6.f+(playerIconOffset!=0 ? 2.0f : 0.f),this->getContentHeight()-10.f});
     authorLabel->setScale(0.5f);
     this->addChild(authorLabel);
 
-    /*if (m_reply.reply_count > 0){
-        auto text = fmt::format("{} Repl{}",m_reply.reply_count,(m_reply.reply_count == 1 ? "y" : "ies"));
-        auto replyLabel = CCLabelBMFont::create(text.c_str(),"goldFont.fnt");
-    }*/
-
     // come back to this idea later maybe
     //if (m_reply.likes < 0) return true;
+    
+    //if reply count bigger than 0
+    /*auto text = fmt::format("{} Repl{}",m_reply.reply_count,(m_reply.reply_count == 1 ? "y" : "ies"));
+    auto replyLabel = CCLabelBMFont::create(text.c_str(),"chatFont.fnt");
+    replyLabel->setPosition({41.f+authorLabel->getScaledContentWidth(),26.f});
+    replyLabel->setAlignment(kCCTextAlignmentLeft);
+    replyLabel->setAnchorPoint({0,0.5});
+    replyLabel->setScale(0.4f);
+    this->addChild(replyLabel);*/
 
-    auto contentLabel = CCLabelBMFont::create(m_reply.content.c_str(),"chatFont.fnt",200.f,kCCTextAlignmentLeft);
+    /*auto contentLabel = CCLabelBMFont::create(m_reply.content.c_str(),"chatFont.fnt",200.f,kCCTextAlignmentLeft);
     contentLabel->setAnchorPoint({0,0.5});
     contentLabel->setPosition({36.f,13.f});
-    contentLabel->setScale(0.65f);
+    contentLabel->setScale(0.65f);*/
+
+    //auto contentLabel = TextArea::create(m_reply.content,"chatFont.fnt",0.65f,200.f,{0,1},10.f,false);
+    auto contentLabel = SimpleTextArea::create(m_reply.content,"chatFont.fnt",0.65f);
+    contentLabel->setWidth(this->getContentWidth()-70.f);
+    //contentLabel->setMaxLines(2);
+    contentLabel->setWrappingMode(WrappingMode::WORD_WRAP);
+    if (m_reply.content.find(" ")==-1) contentLabel->setWrappingMode(WrappingMode::CUTOFF_WRAP);
+    if (m_rl->m_displayMode==Mode::CompactCells) contentLabel->setPosition({5.f,this->getContentHeight()-18.f});
+    if (m_rl->m_displayMode==Mode::LargeCells) contentLabel->setPosition({5.f,this->getContentHeight()/2});
+    contentLabel->setAnchorPoint({0,1});
+    if (m_rl->m_displayMode==Mode::LargeCells) contentLabel->setAnchorPoint({0,0.5});
+    //if (contentLabel->getLines().size()>=2) {contentLabel->setScale(0.45f);if (contentLabel->getLines().size()==1){contentLabel->setPositionY(contentLabel->getPositionY()-contentLabel->getScaledContentHeight()/2);}}
+    scaleAreaToFit(contentLabel,16.f);
     this->addChild(contentLabel);
 
     std::string timestamp = (m_reply.from_comment ? m_reply.comment_timestamp+" ago" : toAgoString(m_reply.timestamp/1000));
