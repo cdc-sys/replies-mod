@@ -119,8 +119,39 @@ bool ReplyLayer::setup(std::string const& commentID){
     border->setPosition({20.f,55.f});
     border->setAnchorPoint({0,0});
     this->m_mainLayer->addChild(border);
+
+    auto reloadSpr = CCSprite::createWithSpriteFrameName("GJ_updateBtn_001.png");
+    reloadBtn = CCMenuItemSpriteExtra::create(reloadSpr,this,menu_selector(ReplyLayer::onReload));
+    reloadBtn->setPosition({20.f,270.f});
+    reloadSpr->setScale(0.5f);
+    this->m_buttonMenu->addChild(reloadBtn);
+
+    auto prevSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
+    auto nextSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
+    nextSprite->setFlipX(true);
+    this->m_prevBtn = CCMenuItemExt::createSpriteExtra(prevSprite, [this](auto btn){
+        this->m_page -= 1;
+        this->loadReplies(false);
+    });
+    this->m_nextBtn = CCMenuItemExt::createSpriteExtra(nextSprite, [this](auto btn){
+        this->m_page += 1;
+        this->loadReplies(false);
+    });
+    this->m_prevBtn->setPosition({-20.f,winSize.height/2.5f});
+    this->m_nextBtn->setPosition({395.f,winSize.height/2.5f});
+    this->m_buttonMenu->addChild(m_prevBtn);
+    this->m_buttonMenu->addChild(m_nextBtn);
+
+    pageLabel = CCLabelBMFont::create("Page ?/? (Total: ?)","chatFont.fnt");
+    pageLabel->limitLabelWidth(200.f, 0.6f, 0.2f);
+    pageLabel->setColor({0,0,0});
+    pageLabel->setOpacity(90);
+    pageLabel->setAlignment(CCTextAlignment::kCCTextAlignmentRight);
+    pageLabel->setAnchorPoint({1,0.5});
+    pageLabel->setPosition({365.f,270.f});
+    this->m_mainLayer->addChild(pageLabel);
     
-    this->loadReplies();
+    this->loadReplies(false);
     return true;
 }
 bool isLastInTree(Reply reply){
@@ -161,6 +192,17 @@ float ReplyLayer::iterate(Reply reply,int replyLevel, Reply parentReply,int skip
 }
 
 void ReplyLayer::populate(std::vector<Reply> const& replies,std::string const& message){
+    if (m_page==1) m_prevBtn->setVisible(false);
+    else m_prevBtn->setVisible(true);
+    if (m_page==m_maxPages) m_nextBtn->setVisible(false);
+    else m_nextBtn->setVisible(true);
+    reloadBtn->setEnabled(true);
+
+    replyCache[m_commentID].message = message;
+    replyCache[m_commentID].max_pages = this->m_maxPages;
+    replyCache[m_commentID].total_replies = this->m_totalReplies;
+    replyCache[m_commentID].cached[this->m_page].replies = replies;
+    replyCache[m_commentID].time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
     float totalHeight = 0.f;
     m_scrollLayer->m_contentLayer->removeAllChildren();
     m_scrollLayer->m_contentLayer->setLayout(
@@ -196,6 +238,8 @@ void ReplyLayer::populate(std::vector<Reply> const& replies,std::string const& m
     m_scrollLayer->m_contentLayer->setContentSize({335.f,totalHeight});
     m_scrollLayer->m_contentLayer->updateLayout();
     m_scrollLayer->moveToTop();
+
+    pageLabel->setString(fmt::format("Page {}/{} (Total: {})",this->m_page,this->m_maxPages,this->m_totalReplies).c_str());
 }
 
 void ReplyLayer::onUpload(CCObject* sender){
@@ -206,9 +250,9 @@ void ReplyLayer::onUpload(CCObject* sender){
             if (auto res = e->getValue()){
                 m_uploadBtn->setEnabled(true);
                 if (res->ok()){
-                    this->m_page = this->m_maxPages;
+                    this->m_page = std::ceil((m_totalReplies)/10)+1;
                     this->m_scrollLayer->m_contentLayer->removeAllChildren();
-                    this->loadReplies();
+                    this->loadReplies(true);
                     m_replyTextInput->setString("");
                 } else {
                     auto json = res->json().unwrapOrDefault();
@@ -232,7 +276,23 @@ void ReplyLayer::onUpload(CCObject* sender){
     }
 }
 
-void ReplyLayer::loadReplies(){
+void ReplyLayer::loadReplies(bool force){
+    auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
+    auto cache = replyCache[this->m_commentID];
+    auto diff = now-replyCache[this->m_commentID].time;
+    if (cache.cached.count(this->m_page)&&diff<std::chrono::seconds(300)&&!force){
+        if (now-cache.cached[this->m_page].time<std::chrono::seconds(300)){
+            this->m_maxPages = cache.max_pages;
+            this->m_totalReplies = cache.total_replies;
+            this->populate(cache.cached[this->m_page].replies,cache.message);
+        }
+        return;
+    }
+
+    this->populate({});
+    this->m_nextBtn->setVisible(false);
+    this->reloadBtn->setEnabled(false);
+
     auto req = web::WebRequest();
     auto loadingSpinner = LoadingCircle::create();
     loadingSpinner->setParentLayer(this->m_mainLayer);
@@ -244,6 +304,7 @@ void ReplyLayer::loadReplies(){
     spinnerSprite->setPosition({loadingSpinner->getContentWidth()/2,loadingSpinner->getContentHeight()/2});
 
     loadingSpinner->show();
+
     m_webListener.bind([this,loadingSpinner](web::WebTask::Event* e){
         if (auto res = e->getValue()){
             loadingSpinner->fadeAndRemove();
@@ -288,4 +349,8 @@ void ReplyLayer::onUploadFailed(int code){
             m_replyTextInput->setString("");
             break;
     }
+}
+void ReplyLayer::onReload(CCObject* sender){
+    replyCache[this->m_commentID].cached = {};
+    this->loadReplies(true);
 }

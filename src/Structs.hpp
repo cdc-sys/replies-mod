@@ -166,3 +166,19 @@ inline std::string toAgoString(int timestamp) {
 }
 static constexpr const std::string_view SERVER_URL = "https://tf7lj3c8-6650.euw.devtunnels.ms";
 static const std::string MOD_VERSION_HEADER = "testing.3";
+
+struct CacheEntry {
+    std::vector<Reply> replies;
+    std::chrono::seconds time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
+};
+
+struct ReplyCache {
+    int page=1;
+    int max_pages=1;
+    int total_replies=0;
+    std::string message;
+    std::map<int,CacheEntry> cached;
+    std::chrono::seconds time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
+};
+
+static std::map<std::string,ReplyCache> replyCache = {};

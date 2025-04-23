@@ -12,28 +12,39 @@ class ReplyLayer : public geode::Popup<std::string const&> {
     std::string m_commentID;
     geode::TextInput* m_replyTextInput;
     CCMenuItemSpriteExtra* m_uploadBtn;
+    CCMenuItemSpriteExtra* m_prevBtn;
+    CCMenuItemSpriteExtra* m_nextBtn;
     CCLabelBMFont* authenticateLabel;
+    CCLabelBMFont* pageLabel;
     CCMenuItemSpriteExtra* authenticateBtn;
+    CCMenuItemSpriteExtra* reloadBtn;
     geode::ScrollLayer* m_scrollLayer;
     geode::EventListener<web::WebTask> m_webListener;
+
     int m_page=1;
     int m_maxPages=1;
     int m_totalReplies=0;
+
     GJComment* m_comment;
     Reply m_reply;
+
     bool setup(std::string const& commentID) override;
     void populate(std::vector<Reply> const& replies,std::string const& message="");
-    void onUpload(CCObject* sender);
-    void onAuthenticate(CCObject* sender);
     float iterate(Reply reply,int replyLevel,Reply parentReply={},int skip=0);
+    void onUpload(CCObject* sender);
+    void onReload(CCObject* sender);
+    void onAuthenticate(CCObject* sender);
     void onUploadFailed(int code);
+
     public:
     Mode m_displayMode=Mode::CompactCells;
     bool _m_darker;
+
     void show() override; 
-    void loadReplies();
+    void loadReplies(bool force);
     void addReplyUI();
     void onClose(CCObject*sender) override;
+
     static ReplyLayer* create(GJComment* comment);
     static ReplyLayer* create(Reply reply);
 };

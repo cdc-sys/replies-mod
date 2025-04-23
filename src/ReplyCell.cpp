@@ -36,7 +36,7 @@ void ReplyCell::doDelete(){
                 }
             } else {
                 this->removeFromParent();
-                m_rl->loadReplies();
+                m_rl->loadReplies(true);
             }
         }
     });
