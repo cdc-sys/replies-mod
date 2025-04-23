@@ -36,6 +36,7 @@ jobs:
         uses: geode-sdk/build-geode-mod@main
         with:
           build-config: 'RelWithDebInfo'
+          export-pdb: true
           bindings: geode-sdk/bindings
           bindings-ref: main
           combine: true
