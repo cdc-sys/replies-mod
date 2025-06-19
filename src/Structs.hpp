@@ -181,4 +181,6 @@ struct ReplyCache {
     std::chrono::seconds time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
 };
 
-static std::map<std::string,ReplyCache> replyCache = {};
+static std::map<std::string,ReplyCache> g_replyCache = {};
+static std::vector<std::string> g_votedOn = {};
+#define VECTOR_HAS_ITEM(vec, item) std::find(vec.begin(), vec.end(), item) != vec.end()

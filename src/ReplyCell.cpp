@@ -14,6 +14,8 @@ void ReplyCell::onReply(CCObject* sender){
 }
 
 void ReplyCell::onVote(CCObject* sender){
+    if (VECTOR_HAS_ITEM(g_votedOn, this->m_reply.id)) return;
+
     #ifndef GEODE_IS_MACOS
     if (m_reply.from_comment) return;
     auto likeLayer = MyLikeItemLayer::createWrapper(this->m_reply.id,this);

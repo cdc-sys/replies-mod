@@ -10,7 +10,7 @@
 	"name": "Replies",
 	"version": "v1.0.0",
 	"developer": "cdc",
-	"description": "",
+	"description": "A mod that adds replying to comments.",
 	"resources": {
 		"spritesheets": {
 			"replySheet_001":[
