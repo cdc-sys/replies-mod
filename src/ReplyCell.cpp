@@ -35,7 +35,7 @@ void ReplyCell::doDelete(){
                     notif->show();
                 }
             } else {
-                this->removeFromParent();
+                m_rl->m_page = std::ceil((m_rl->m_totalReplies-2)/10)+1;
                 m_rl->loadReplies(true);
             }
         }

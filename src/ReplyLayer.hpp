@@ -21,10 +21,6 @@ class ReplyLayer : public geode::Popup<std::string const&> {
     geode::ScrollLayer* m_scrollLayer;
     geode::EventListener<web::WebTask> m_webListener;
 
-    int m_page=1;
-    int m_maxPages=1;
-    int m_totalReplies=0;
-
     GJComment* m_comment;
     Reply m_reply;
 
@@ -37,6 +33,11 @@ class ReplyLayer : public geode::Popup<std::string const&> {
     void onUploadFailed(int code);
 
     public:
+
+    int m_page=1;
+    int m_maxPages=1;
+    int m_totalReplies=0;
+    
     Mode m_displayMode=Mode::CompactCells;
     bool _m_darker;
 

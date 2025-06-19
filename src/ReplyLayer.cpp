@@ -239,7 +239,7 @@ void ReplyLayer::populate(std::vector<Reply> const& replies,std::string const& m
     m_scrollLayer->m_contentLayer->updateLayout();
     m_scrollLayer->moveToTop();
 
-    pageLabel->setString(fmt::format("Page {}/{} (Total: {})",this->m_page,this->m_maxPages,this->m_totalReplies).c_str());
+    pageLabel->setString(fmt::format("Page {}/{} (Total: {})",this->m_page,this->m_maxPages,geode::utils::numToAbbreviatedString(this->m_totalReplies)).c_str());
 }
 
 void ReplyLayer::onUpload(CCObject* sender){
@@ -301,13 +301,17 @@ void ReplyLayer::loadReplies(bool force){
 
     // why do i have to do this?
     auto spinnerSprite = loadingSpinner->m_sprite;
-    spinnerSprite->setPosition({loadingSpinner->getContentWidth()/2,loadingSpinner->getContentHeight()/2});
+    spinnerSprite->setPosition({loadingSpinner->getContentWidth()/2,loadingSpinner->getContentHeight()/2.5f});
 
-    loadingSpinner->show();
+    // there's apparently no way to stop the fading without just.. remaking the entire show function LOLLL
+    m_mainLayer->addChild(loadingSpinner);
+    spinnerSprite->runAction(CCRepeatForever::create(CCRotateBy::create(1,360)));
+    spinnerSprite->setBlendFunc({ GL_ONE, GL_ONE });
+    spinnerSprite->setOpacity(200);
 
     m_webListener.bind([this,loadingSpinner](web::WebTask::Event* e){
         if (auto res = e->getValue()){
-            loadingSpinner->fadeAndRemove();
+            loadingSpinner->removeFromParent();
             if (res->ok()){
                 auto json = res->json().unwrapOrDefault();
                 if (json.contains("replies")){

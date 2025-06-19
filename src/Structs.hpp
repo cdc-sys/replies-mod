@@ -165,7 +165,7 @@ inline std::string toAgoString(int timestamp) {
     return fmt::format("this is the secret string");
 }
 static constexpr const std::string_view SERVER_URL = "https://tf7lj3c8-6650.euw.devtunnels.ms";
-static const std::string MOD_VERSION_HEADER = "testing.4";
+static const std::string MOD_VERSION_HEADER = "testing.5";
 
 struct CacheEntry {
     std::vector<Reply> replies;
