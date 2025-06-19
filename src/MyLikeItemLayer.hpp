@@ -23,13 +23,14 @@ class $modify(MyLikeItemLayer,LikeItemLayer){
         this->m_fields->m_requestListener.bind([this,type](web::WebTask::Event* e){
             if (auto res = e->getValue()) {
                 if (!res->ok()) {
-                    g_votedOn.push_back(this->m_fields->id);
                     auto json = res->json().unwrapOrDefault();
                     if (json.contains("err")){
                         auto errorText = json["err"]["text"].asString().unwrapOr("Unknown");
                         auto notif = geode::Notification::create(fmt::format("Voting failed: {}",errorText),NotificationIcon::Error);
                         notif->show();
                     }
+                } else {
+                    g_votedOn.push_back(this->m_fields->id);
                 }
                 this->release();
             }
