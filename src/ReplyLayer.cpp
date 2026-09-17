@@ -284,8 +284,10 @@ void ReplyLayer::loadReplies(bool force){
             this->m_maxPages = cache.max_pages;
             this->m_totalReplies = cache.total_replies;
             this->populate(cache.cached[this->m_page].replies,cache.message);
+            return;
+        } else {
+            geode::log::info("updating cache");
         }
-        return;
     }
 
     this->populate({});

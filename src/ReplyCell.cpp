@@ -77,7 +77,8 @@ void scaleAreaToFit(SimpleTextArea* area,float max){
 }
 bool ReplyCell::init(){
     if (!CCNode::init()) return false;
-    float offset = 36*m_replyLevel;
+    // og width 36
+    float offset = 23*m_replyLevel;
     this->setContentSize({335.f-offset,36.f});
     if (m_rl->m_displayMode==Mode::LargeCells){
         this->setContentHeight(90.f);
@@ -107,11 +108,11 @@ bool ReplyCell::init(){
 
         auto spriteName = fmt::format("reply-{}.png"_spr,(i>0 ? 1 : (int)this->m_spriteType+1));
         auto sprite = CCSprite::createWithSpriteFrameName(spriteName.c_str());
-        sprite->setScale(36/sprite->getContentWidth());
+        sprite->setScale(23/sprite->getContentWidth());
         //sprite->setScale(4.f);
         sprite->setOpacity(50);
         sprite->setAnchorPoint({0,0});
-        sprite->setPosition({-36.f*(i+1),0});
+        sprite->setPosition({-23.f*(i+1),0});
         this->addChild(sprite);
     }
 
@@ -160,13 +161,16 @@ bool ReplyCell::init(){
     //if (m_reply.likes < 0) return true;
     
     //if reply count bigger than 0
-    /*auto text = fmt::format("{} Repl{}",m_reply.reply_count,(m_reply.reply_count == 1 ? "y" : "ies"));
-    auto replyLabel = CCLabelBMFont::create(text.c_str(),"chatFont.fnt");
-    replyLabel->setPosition({41.f+authorLabel->getScaledContentWidth(),26.f});
-    replyLabel->setAlignment(kCCTextAlignmentLeft);
-    replyLabel->setAnchorPoint({0,0.5});
-    replyLabel->setScale(0.4f);
-    this->addChild(replyLabel);*/
+    if (m_reply.reply_count > 0 && m_bgColor != Highlighted) {
+        auto text = fmt::format("(+ {} Repl{})",m_reply.reply_count,(m_reply.reply_count == 1 ? "y" : "ies"));
+        auto replyLabel = CCLabelBMFont::create(text.c_str(),"chatFont.fnt");
+        replyLabel->setPosition({25.f+authorLabel->getScaledContentWidth(),26.f});
+        replyLabel->setAlignment(kCCTextAlignmentLeft);
+        replyLabel->setAnchorPoint({0,0.5});
+        replyLabel->setScale(0.4f);
+        replyLabel->setOpacity(200);
+        this->addChild(replyLabel);
+    }
 
     /*auto contentLabel = CCLabelBMFont::create(m_reply.content.c_str(),"chatFont.fnt",200.f,kCCTextAlignmentLeft);
     contentLabel->setAnchorPoint({0,0.5});
@@ -217,12 +221,12 @@ bool ReplyCell::init(){
     likeLabel = CCLabelBMFont::create("0","bigFont.fnt");
     likeMenu->addChild(likeLabel);
     likeMenu->addChild(likeBtn);
-    if (g_permissions >= ModerationPermissions::CommentModeration || m_reply.author_id == GJAccountManager::get()->m_accountID && !m_reply.from_comment){
+    if ((g_permissions >= ModerationPermissions::CommentModeration || m_reply.author_id == GJAccountManager::get()->m_accountID) && !m_reply.from_comment){
         auto deleteSpr = CCSprite::createWithSpriteFrameName("GJ_deleteIcon_001.png");
         auto deleteBtn = CCMenuItemSpriteExtra::create(deleteSpr,this,menu_selector(ReplyCell::onDelete));
         likeMenu->addChild(deleteBtn);
     }
-    if (!m_reply.from_comment && this->m_bgColor == Highlighted) likeMenu->addChild(replyBtn);
+    if (!m_reply.from_comment && this->m_bgColor != Highlighted) likeMenu->addChild(replyBtn);
     auto layout = AxisLayout::create(Axis::Row);
     layout->setAxisReverse(true);
     layout->setAutoGrowAxis(1.f);

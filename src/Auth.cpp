@@ -184,6 +184,7 @@ class $modify(MyMenuLayer,MenuLayer){
                 auto modPerms = json["mod_permission_level"].asInt().unwrapOr(0);
                 g_permissions = (ModerationPermissions)modPerms;
                 Mod::get()->setSavedValue<int64_t>("moderation_permissions", modPerms);
+                geode::log::info("mod perm level: {} ENUM: {}",modPerms,(int)g_permissions);
             }
         });
         return true;
