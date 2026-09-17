@@ -19,5 +19,13 @@
 				"resources/reply-3.png"
 			]
 		}
+	},
+	"settings": {
+		"coloured-branches": {
+            "name": "Coloured branches",
+            "description": "Whether the reply branches should be coloured based on the depth.",
+            "type": "bool",
+            "default": false
+        }
 	}
 }

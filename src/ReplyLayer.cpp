@@ -186,9 +186,24 @@ float ReplyLayer::iterate(Reply reply,int replyLevel, Reply parentReply,int skip
         m_scrollLayer->m_contentLayer->addChild(replyCell);
         total += replyCell->getContentHeight();
         this->_m_darker = !this->_m_darker;
+        /*if (last && reply.reply_count > 0 && replyLevel > 1) {
+            auto replyCell = ReplyCell::create(this,reply,(this->_m_darker ? ReplyBackgroundColor::Darker : ReplyBackgroundColor::Regular),replyLevel,ReplySpriteType::MoreReplies,skip);
+            m_scrollLayer->m_contentLayer->addChild(replyCell);
+            total += replyCell->getContentHeight();
+            this->_m_darker = !this->_m_darker;
+            moreAdded = true;
+        }*/
         if (last&&isLastInTree(reply_)) skip += 1;
         total += iterate(reply_,replyLevel+1,reply,skip);
         i++;
+    }
+    if (reply.reply_count > 0 && replyLevel > 1) {
+        // really annoying edgecase
+        bool noRepliesShown = reply.replies.size() == 0 && parentReply.replies[parentReply.replies.size()-1].id == reply.id;
+        auto replyCell = ReplyCell::create(this,reply,(this->_m_darker ? ReplyBackgroundColor::Darker : ReplyBackgroundColor::Regular),replyLevel,ReplySpriteType::MoreReplies,skip,1+noRepliesShown);
+        m_scrollLayer->m_contentLayer->addChild(replyCell);
+        total += replyCell->getContentHeight();
+        this->_m_darker = !this->_m_darker;
     }
     return total;
 }

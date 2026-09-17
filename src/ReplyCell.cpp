@@ -84,6 +84,12 @@ bool ReplyCell::init(){
         this->setContentHeight(90.f);
     }
 
+    bool moreReplies = this->m_spriteType == ReplySpriteType::MoreReplies;
+
+    if (moreReplies) {
+        this->setContentHeight(23.f);
+    }
+
     auto line = CCLayerColor::create();
     line->setColor({0,0,0});
     line->setContentSize({this->getContentSize().width,.425f});
@@ -103,16 +109,30 @@ bool ReplyCell::init(){
     bg2->setAnchorPoint({0,0});
     bg2->setPosition({-offset,0});
     this->addChild(bg2);
-    
-    for (int i = 0; i<m_replyLevel-m_skipLines; i++){
 
+    std::vector<ccColor3B> line_colours = {
+        {255, 0, 255},
+        {0,255,0},
+        {0, 234, 255},
+        {255, 242, 0}
+    };
+
+    bool colouredBranchesEnabled = Mod::get()->getSettingValue<bool>("coloured-branches");
+    
+    for (int i = m_skipLinesRight; i<m_replyLevel-m_skipLines; i++){
+        if (moreReplies && i == 0) continue;
         auto spriteName = fmt::format("reply-{}.png"_spr,(i>0 ? 1 : (int)this->m_spriteType+1));
         auto sprite = CCSprite::createWithSpriteFrameName(spriteName.c_str());
         sprite->setScale(23/sprite->getContentWidth());
+        if (moreReplies) sprite->setScaleY(23/sprite->getContentHeight());
         //sprite->setScale(4.f);
         sprite->setOpacity(50);
         sprite->setAnchorPoint({0,0});
         sprite->setPosition({-23.f*(i+1),0});
+        if (colouredBranchesEnabled) {
+            sprite->setColor(line_colours[abs(m_replyLevel-m_skipLines-i) % 4]);
+            sprite->setOpacity(100);
+        }
         this->addChild(sprite);
     }
 
@@ -136,7 +156,7 @@ bool ReplyCell::init(){
     this->addChild(bg);
     
     float playerIconOffset = 0.f;
-    if (!m_reply.account_comment){
+    if (!m_reply.account_comment && !moreReplies){
         auto playerIcon = SimplePlayer::create(m_reply.icon.type);
         playerIcon->setPosition({5.f,this->getContentHeight()-(30.f*0.45f)-4.f});
         playerIcon->setScale(0.45f);
@@ -150,27 +170,36 @@ bool ReplyCell::init(){
         playerIconOffset = 30.f*0.45f;
     }
 
+    auto authorMenu = CCMenu::create();
+
     auto authorLabel = CCLabelBMFont::create(m_reply.author_name.c_str(),"goldFont.fnt");
+    if (moreReplies) authorLabel->setString(fmt::format("+ {} Repl{}",m_reply.reply_count,m_reply.reply_count == 1 ? "y" : "ies").c_str());
     authorLabel->setAlignment(kCCTextAlignmentLeft);
-    authorLabel->setAnchorPoint({0,0.5});
-    authorLabel->setPosition({playerIconOffset+6.f+(playerIconOffset!=0 ? 2.0f : 0.f),this->getContentHeight()-10.f});
     authorLabel->setScale(0.5f);
-    this->addChild(authorLabel);
+
+    auto clickableAuthor = CCMenuItemExt::createSpriteExtra(authorLabel, [this,moreReplies](auto) {
+        if (moreReplies){
+            auto rl = ReplyLayer::create(m_reply);
+            rl->show();
+        } else {
+            auto profile = ProfilePage::create(m_reply.author_id,m_reply.author_id == GJAccountManager::get()->m_accountID);
+            profile->show();
+        }
+    });
+    clickableAuthor->setAnchorPoint({0,0.5});
+    clickableAuthor->setSizeMult(1.1f);
+
+    authorMenu->addChild(clickableAuthor);
+
+    authorMenu->setPosition({playerIconOffset+6.f+(playerIconOffset!=0 ? 2.0f : 0.f),this->getContentHeight()-10.f});
+
+    this->addChild(authorMenu);
+
+    if (moreReplies) return true;
 
     // come back to this idea later maybe
     //if (m_reply.likes < 0) return true;
-    
-    //if reply count bigger than 0
-    if (m_reply.reply_count > 0 && m_bgColor != Highlighted) {
-        auto text = fmt::format("(+ {} Repl{})",m_reply.reply_count,(m_reply.reply_count == 1 ? "y" : "ies"));
-        auto replyLabel = CCLabelBMFont::create(text.c_str(),"chatFont.fnt");
-        replyLabel->setPosition({25.f+authorLabel->getScaledContentWidth(),26.f});
-        replyLabel->setAlignment(kCCTextAlignmentLeft);
-        replyLabel->setAnchorPoint({0,0.5});
-        replyLabel->setScale(0.4f);
-        replyLabel->setOpacity(200);
-        this->addChild(replyLabel);
-    }
+
 
     /*auto contentLabel = CCLabelBMFont::create(m_reply.content.c_str(),"chatFont.fnt",200.f,kCCTextAlignmentLeft);
     contentLabel->setAnchorPoint({0,0.5});
@@ -255,7 +284,7 @@ void ReplyCell::updateLikes(int likes){
     likeSpr->setContentSize(cs);
 }
 
-ReplyCell* ReplyCell::create(ReplyLayer* rl,Reply reply,ReplyBackgroundColor bgColor, int replyLevel,ReplySpriteType spriteType, int skipLines){
+ReplyCell* ReplyCell::create(ReplyLayer* rl,Reply reply,ReplyBackgroundColor bgColor, int replyLevel,ReplySpriteType spriteType, int skipLines, int skipLinesRight){
     auto ret = new ReplyCell();
     ret->m_rl = rl;
     ret->m_reply = reply;
@@ -263,6 +292,7 @@ ReplyCell* ReplyCell::create(ReplyLayer* rl,Reply reply,ReplyBackgroundColor bgC
     ret->m_replyLevel = replyLevel;
     ret->m_spriteType = spriteType;
     ret->m_skipLines = skipLines;
+    ret->m_skipLinesRight = skipLinesRight;
     if (ret && ret->init()) {
         ret->autorelease();
         return ret;
