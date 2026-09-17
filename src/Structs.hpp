@@ -164,8 +164,8 @@ inline std::string toAgoString(int timestamp) {
     }
     return fmt::format("this is the secret string");
 }
-static constexpr const std::string_view SERVER_URL = "http://localhost:6650";
-static const std::string MOD_VERSION_HEADER = "testing.5";
+static constexpr const std::string_view SERVER_URL = "https://replies.cdc-sys.com";
+static const std::string MOD_VERSION_HEADER = "testing.10";
 
 struct CacheEntry {
     std::vector<Reply> replies;
@@ -184,3 +184,14 @@ struct ReplyCache {
 static std::map<std::string,ReplyCache> g_replyCache = {};
 static std::vector<std::string> g_votedOn = {};
 #define VECTOR_HAS_ITEM(vec, item) std::find(vec.begin(), vec.end(), item) != vec.end()
+
+static bool g_syncedIcons = false;
+
+enum class ModerationPermissions {
+    None = 0,
+    CommentModeration = 1,
+    UserModeration = 2,
+    FullAccess = 3
+};
+
+static ModerationPermissions g_permissions = (ModerationPermissions)Mod::get()->getSavedValue<int64_t>("moderation_permissions");

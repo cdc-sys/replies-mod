@@ -160,7 +160,11 @@ class $modify(MyMenuLayer,MenuLayer){
     };
     bool init(){
         if (!MenuLayer::init()) return false;
+
+        if (g_syncedIcons) return true;
         if (Mod::get()->getSavedValue<std::string>("token").empty()) return true;
+
+        g_syncedIcons = true;
         auto req = web::WebRequest();
         req.header("Authorization",Mod::get()->getSavedValue<std::string>("token"));
         req.header("mod-version",MOD_VERSION_HEADER);
@@ -171,15 +175,15 @@ class $modify(MyMenuLayer,MenuLayer){
                 auto notif = geode::Notification::create("[Replies] Unauthorized.",NotificationIcon::Error);
                 notif->show();
                 Mod::get()->setSavedValue<std::string>("token","");
-                // temporary
-                auto alert = FLAlertLayer::create("Replies Notice","Hello tester, the <cg>auth validation</c> request has failed.\nThis likely means the servers are <cr>currently down</c> (you can still check by opening the reply popup)\nPlease <cr>disable</c> the mod in the <cp>Geode UI</c> until a new test is announced!","OK");
-                alert->m_scene = this;
-                alert->show();
             } else {
                 // kinda evil but hey i already made the func
                 auto auth = Auth::create(nullptr);
                 auth->retain();
                 auth->send_icons();
+                auto json = res.json().unwrapOrDefault();
+                auto modPerms = json["mod_permission_level"].asInt().unwrapOr(0);
+                g_permissions = (ModerationPermissions)modPerms;
+                Mod::get()->setSavedValue<int64_t>("moderation_permissions", modPerms);
             }
         });
         return true;

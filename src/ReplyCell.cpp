@@ -217,12 +217,12 @@ bool ReplyCell::init(){
     likeLabel = CCLabelBMFont::create("0","bigFont.fnt");
     likeMenu->addChild(likeLabel);
     likeMenu->addChild(likeBtn);
-    if (m_reply.author_id == GJAccountManager::get()->m_accountID&&!m_reply.from_comment){
+    if (g_permissions >= ModerationPermissions::CommentModeration || m_reply.author_id == GJAccountManager::get()->m_accountID && !m_reply.from_comment){
         auto deleteSpr = CCSprite::createWithSpriteFrameName("GJ_deleteIcon_001.png");
         auto deleteBtn = CCMenuItemSpriteExtra::create(deleteSpr,this,menu_selector(ReplyCell::onDelete));
         likeMenu->addChild(deleteBtn);
     }
-    if (!m_reply.from_comment) likeMenu->addChild(replyBtn);
+    if (!m_reply.from_comment && this->m_bgColor == Highlighted) likeMenu->addChild(replyBtn);
     auto layout = AxisLayout::create(Axis::Row);
     layout->setAxisReverse(true);
     layout->setAutoGrowAxis(1.f);

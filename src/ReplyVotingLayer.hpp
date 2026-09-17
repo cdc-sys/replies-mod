@@ -37,24 +37,44 @@ protected:
         });
     }
     bool init() {
-        if (!Popup::init(240.f, 160.f))
+        if (!Popup::init(200.f, 115.f))
             return false;
 
         this->setTitle("Vote");
 
+        this->m_title->setScale(1.f);
+        this->m_title->setFntFile("bigFont.fnt");
+
         auto menu = CCMenu::create();
-        menu->setLayout(geode::SimpleAxisLayout::create(Axis::Row));
+
+        auto layout = geode::RowLayout::create();
+
+        layout->setAxis(Axis::Row);
+        layout->setAxisAlignment(AxisAlignment::Even);
+        layout->setCrossAxisAlignment(AxisAlignment::Center);
+        layout->setCrossAxisLineAlignment(AxisAlignment::Center);
+        layout->setGap(5.f);
+        layout->setAutoScale(true);
+
+        menu->setLayout(layout);
 
         auto likeBtn = CCMenuItemExt::createSpriteExtra(CCSprite::createWithSpriteFrameName("GJ_likeBtn_001.png"),[this](auto s){
             this->castVote(1);
         });
 
-        auto dislikeBtn = CCMenuItemExt::createSpriteExtra(CCSprite::createWithSpriteFrameName("GJ_likeBtn_001.png"),[this](auto s){
+        auto dislikeBtn = CCMenuItemExt::createSpriteExtra(CCSprite::createWithSpriteFrameName("GJ_dislikeBtn_001.png"),[this](auto s){
             this->castVote(-1);
         });
 
         menu->addChild(likeBtn);
         menu->addChild(dislikeBtn);
+
+        menu->setPosition({this->m_mainLayer->getContentWidth()/2,44.5f});
+        menu->setAnchorPoint({0.5,0.5});
+        menu->setScale(1.125f);
+        menu->setContentWidth(165.f);
+        
+        menu->updateLayout();
 
         this->m_mainLayer->addChild(menu);
 
