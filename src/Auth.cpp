@@ -26,15 +26,15 @@ class MyUploadDelegate : public UploadMessageDelegate {
     }
 };
 
-void Auth::handleError(web::WebResponse* res){
-    auto json = res->json().unwrapOrDefault();
+void Auth::handleError(web::WebResponse res){
+    auto json = res.json().unwrapOrDefault();
     if (json.contains("err")){
         auto errorText = json["err"]["text"].asString().unwrapOr("Unknown");
         auto alert = FLAlertLayer::create("Uh Oh!",fmt::format("<cr>Auth failed: {}</c>",errorText).c_str(),"OK");
         alert->show();
         m_loading->fadeOut();
     } else {
-        auto alert = FLAlertLayer::create("Uh Oh!",fmt::format("<cr>Auth failed: {}</c>",res->string().unwrapOr("Unknown")).c_str(),"OK");
+        auto alert = FLAlertLayer::create("Uh Oh!",fmt::format("<cr>Auth failed: {}</c>",res.string().unwrapOr("Unknown")).c_str(),"OK");
         alert->show();
         m_loading->fadeOut();
     }
@@ -65,16 +65,6 @@ int whichIcon() {
 }
 void Auth::send_icons(){
     auto req = web::WebRequest();
-    m_webListener.bind([this](web::WebTask::Event* e){
-        if (auto res = e->getValue()){
-            if (res->ok()) {
-                this->release();
-            } else {
-                //this->handleError(res);
-                this->release();
-            }
-        }
-    });
     auto GM = GameManager::get();
     req.param("id",whichIcon());
     req.param("type",(int)GM->m_playerIconType);
@@ -85,34 +75,36 @@ void Auth::send_icons(){
     req.header("Authorization", Mod::get()->getSavedValue<std::string>("token"));
     req.header("mod-version",MOD_VERSION_HEADER);
     auto url = fmt::format("{}/update_icons",SERVER_URL);
-    m_webTask = req.post(url);
-    m_webListener.setFilter(m_webTask);
+    m_webListener.spawn(req.post(url),[this](web::WebResponse res){
+        if (res.ok()) {
+            this->release();
+        } else {
+            //this->handleError(res);
+            this->release();
+        }
+    });
 }
 void Auth::step3(){
     auto req = web::WebRequest();
-    m_webListener.bind([this](web::WebTask::Event* e){
-        if (auto res = e->getValue()){
-            if (res->ok()) {
-                // success
-                auto json = res->json().unwrapOrDefault();
-                if (json.contains("token")){
-                    Mod::get()->setSavedValue("token", json["token"].asString().unwrap());
-                    this->m_loading->fadeOut();
-                    this->m_rl->addReplyUI();
-                }
-                if (json["send_icons"].asBool().unwrapOr(false)){
-                    this->send_icons();
-                } else this->release();
-            } else {
-                this->handleError(res);
-            }
-        }
-    });
     req.param("id",GJAccountManager::get()->m_accountID);
     req.header("mod-version",MOD_VERSION_HEADER);
     auto url = fmt::format("{}/auth/validate",SERVER_URL);
-    m_webTask = req.post(url);
-    m_webListener.setFilter(m_webTask);
+    m_webListener.spawn(req.post(url),[this](web::WebResponse res){
+        if (res.ok()) {
+            // success
+            auto json = res.json().unwrapOrDefault();
+            if (json.contains("token")){
+                Mod::get()->setSavedValue("token", json["token"].asString().unwrap());
+                this->m_loading->fadeOut();
+                this->m_rl->addReplyUI();
+            }
+            if (json["send_icons"].asBool().unwrapOr(false)){
+                this->send_icons();
+            } else this->release();
+        } else {
+            this->handleError(res);
+        }
+    });
 }
 
 void Auth::step2(const char* code){
@@ -123,25 +115,21 @@ void Auth::step2(const char* code){
 
 void Auth::step1(){
     auto req = web::WebRequest();
-    m_webListener.bind([this](web::WebTask::Event* e){
-        if (auto res = e->getValue()){
-            if (res->ok()) {
-                // success
-                auto json = res->json().unwrapOrDefault();
-                if (json.contains("code")){
-                    m_loading->changeStatus("Authenticating [2/3]");
-                    step2(json["code"].asString().unwrap().c_str());
-                }
-            } else {
-                this->handleError(res);
-            }
-        }
-    });
     req.param("id",GJAccountManager::get()->m_accountID);
     req.header("mod-version",MOD_VERSION_HEADER);
     auto url = fmt::format("{}/auth/get_code",SERVER_URL);
-    m_webTask = req.get(url);
-    m_webListener.setFilter(m_webTask);
+    m_webListener.spawn(req.get(url),[this](web::WebResponse res){
+        if (res.ok()) {
+            // success
+            auto json = res.json().unwrapOrDefault();
+            if (json.contains("code")){
+                m_loading->changeStatus("Authenticating [2/3]");
+                step2(json["code"].asString().unwrap().c_str());
+            }
+        } else {
+            this->handleError(res);
+        }
+    });
 }
 
 void Auth::start(){
@@ -168,35 +156,32 @@ Auth* Auth::create(ReplyLayer* rl){
 
 class $modify(MyMenuLayer,MenuLayer){
     struct Fields{
-        EventListener<web::WebTask> m_webListener;
+        TaskHolder<web::WebResponse> m_webListener;
     };
     bool init(){
         if (!MenuLayer::init()) return false;
         if (Mod::get()->getSavedValue<std::string>("token").empty()) return true;
         auto req = web::WebRequest();
-        this->m_fields->m_webListener.bind([this](web::WebTask::Event* e){
-            if (auto res = e->getValue()){
-                if (!res->ok()){
-                    geode::log::error("{}",res->string().unwrap());
-                    auto notif = geode::Notification::create("[Replies] Unauthorized.",NotificationIcon::Error);
-                    notif->show();
-                    Mod::get()->setSavedValue<std::string>("token","");
-                    // temporary
-                    auto alert = FLAlertLayer::create("Replies Notice","Hello tester, the <cg>auth validation</c> request has failed.\nThis likely means the servers are <cr>currently down</c> (you can still check by opening the reply popup)\nPlease <cr>disable</c> the mod in the <cp>Geode UI</c> until a new test is announced!","OK");
-                    alert->m_scene = this;
-                    alert->show();
-                } else {
-                    // kinda evil but hey i already made the func
-                    auto auth = Auth::create(nullptr);
-                    auth->retain();
-                    auth->send_icons();
-                }
-            }
-        });
         req.header("Authorization",Mod::get()->getSavedValue<std::string>("token"));
         req.header("mod-version",MOD_VERSION_HEADER);
         auto url = fmt::format("{}/auth/test",SERVER_URL);
-        this->m_fields->m_webListener.setFilter(req.post(url));
+        this->m_fields->m_webListener.spawn(req.post(url),[this](web::WebResponse res){
+            if (!res.ok()){
+                geode::log::error("{}",res.string().unwrap());
+                auto notif = geode::Notification::create("[Replies] Unauthorized.",NotificationIcon::Error);
+                notif->show();
+                Mod::get()->setSavedValue<std::string>("token","");
+                // temporary
+                auto alert = FLAlertLayer::create("Replies Notice","Hello tester, the <cg>auth validation</c> request has failed.\nThis likely means the servers are <cr>currently down</c> (you can still check by opening the reply popup)\nPlease <cr>disable</c> the mod in the <cp>Geode UI</c> until a new test is announced!","OK");
+                alert->m_scene = this;
+                alert->show();
+            } else {
+                // kinda evil but hey i already made the func
+                auto auth = Auth::create(nullptr);
+                auth->retain();
+                auth->send_icons();
+            }
+        });
         return true;
     }
 };

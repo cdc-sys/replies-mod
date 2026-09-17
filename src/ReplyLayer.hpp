@@ -8,7 +8,7 @@ enum class Mode {
     LargeCells,
     CompactCells
 };
-class ReplyLayer : public geode::Popup<std::string const&> {
+class ReplyLayer : public geode::Popup {
     std::string m_commentID;
     geode::TextInput* m_replyTextInput;
     CCMenuItemSpriteExtra* m_uploadBtn;
@@ -19,12 +19,12 @@ class ReplyLayer : public geode::Popup<std::string const&> {
     CCMenuItemSpriteExtra* authenticateBtn;
     CCMenuItemSpriteExtra* reloadBtn;
     geode::ScrollLayer* m_scrollLayer;
-    geode::EventListener<web::WebTask> m_webListener;
+    TaskHolder<web::WebResponse> m_webListener;
 
     GJComment* m_comment;
     Reply m_reply;
 
-    bool setup(std::string const& commentID) override;
+    bool init(std::string const& commentID);
     void populate(std::vector<Reply> const& replies,std::string const& message="");
     float iterate(Reply reply,int replyLevel,Reply parentReply={},int skip=0);
     void onUpload(CCObject* sender);

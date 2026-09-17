@@ -7,12 +7,11 @@
 using namespace geode::prelude;
 
 class Auth : public cocos2d::CCObject {
-    EventListener<web::WebTask> m_webListener;
-    web::WebTask m_webTask;
+    TaskHolder<web::WebResponse> m_webListener;
     ReplyLayer* m_rl;
     void step1();
     void step2(const char* code);
-    void handleError(web::WebResponse* res);
+    void handleError(web::WebResponse res);
     public:
     LoadingOverlay* m_loading;
     void step3();

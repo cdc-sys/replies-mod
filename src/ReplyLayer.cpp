@@ -6,7 +6,7 @@ ReplyLayer* ReplyLayer::create(GJComment* comment) {
     auto ret = new ReplyLayer();
     ret->m_commentID = fmt::format("{}",comment->m_commentID);
     ret->m_comment=comment;
-    if (ret && ret->initAnchored(375, 290,fmt::format("{}",comment->m_commentID))) {
+    if (ret && ret->init(fmt::format("{}",comment->m_commentID))) {
         ret->autorelease();
         return ret;
     }
@@ -19,7 +19,7 @@ ReplyLayer* ReplyLayer::create(Reply reply) {
     ret->m_commentID = reply.id;
     ret->m_comment = nullptr;
     ret->m_reply = reply;
-    if (ret && ret->initAnchored(375, 290,reply.id)) {
+    if (ret && ret->init(reply.id)) {
         ret->autorelease();
         return ret;
     }
@@ -74,7 +74,9 @@ void ReplyLayer::addReplyUI(){
     this->m_buttonMenu->addChild(m_uploadBtn);
 }
 
-bool ReplyLayer::setup(std::string const& commentID){
+bool ReplyLayer::init(std::string const& commentID){
+    if (!Popup::init(375,290)) return false; 
+
     this->setTitle("Replies");
 
     auto winSize = CCDirector::sharedDirector()->getWinSize();
@@ -246,33 +248,30 @@ void ReplyLayer::onUpload(CCObject* sender){
     if (m_replyTextInput->getString().length() > 0){
         m_uploadBtn->setEnabled(false);
         auto req = web::WebRequest();
-        m_webListener.bind([this](web::WebTask::Event* e){
-            if (auto res = e->getValue()){
-                m_uploadBtn->setEnabled(true);
-                if (res->ok()){
-                    this->m_page = std::ceil((m_totalReplies)/10)+1;
-                    this->m_scrollLayer->m_contentLayer->removeAllChildren();
-                    this->loadReplies(true);
-                    m_replyTextInput->setString("");
-                } else {
-                    auto json = res->json().unwrapOrDefault();
-                    if (json.contains("err")){
-                        auto error = json["err"]["text"].asString().unwrapOr("Unknown");
-                        auto notif = geode::Notification::create(fmt::format("Failed to post: {}",error),NotificationIcon::Error);
-                        notif->show();
-                        onUploadFailed(json["err"]["code"].asInt().unwrapOrDefault());
-                    } else {
-                        geode::log::error("Failed to load replies: {}",res->string().unwrapOr("Unknown"));
-                        onUploadFailed(0);
-                    }
-                }
-            }
-        });
         req.header("Authorization", Mod::get()->getSavedValue<std::string>("token"));
         req.header("mod-version",MOD_VERSION_HEADER);
         auto url = fmt::format("{}/replies/{}",SERVER_URL,m_commentID);
         req.param("c",m_replyTextInput->getString());
-        m_webListener.setFilter(req.post(url));
+        m_webListener.spawn(req.post(url),[this](web::WebResponse res){
+            m_uploadBtn->setEnabled(true);
+            if (res.ok()){
+                this->m_page = std::ceil((m_totalReplies)/10)+1;
+                this->m_scrollLayer->m_contentLayer->removeAllChildren();
+                this->loadReplies(true);
+                m_replyTextInput->setString("");
+            } else {
+                auto json = res.json().unwrapOrDefault();
+                if (json.contains("err")){
+                    auto error = json["err"]["text"].asString().unwrapOr("Unknown");
+                    auto notif = geode::Notification::create(fmt::format("Failed to post: {}",error),NotificationIcon::Error);
+                    notif->show();
+                    onUploadFailed(json["err"]["code"].asInt().unwrapOrDefault());
+                } else {
+                    geode::log::error("Failed to load replies: {}",res.string().unwrapOr("Unknown"));
+                    onUploadFailed(0);
+                }
+            }
+        });
     }
 }
 
@@ -309,38 +308,35 @@ void ReplyLayer::loadReplies(bool force){
     spinnerSprite->setBlendFunc({ GL_ONE, GL_ONE });
     spinnerSprite->setOpacity(200);
 
-    m_webListener.bind([this,loadingSpinner](web::WebTask::Event* e){
-        if (auto res = e->getValue()){
-            loadingSpinner->removeFromParent();
-            if (res->ok()){
-                auto json = res->json().unwrapOrDefault();
-                if (json.contains("replies")){
-                    this->m_maxPages = json["total_pages"].asInt().unwrapOr(1);
-                    this->m_totalReplies = json["total"].asInt().unwrapOr(0);
-                    auto replies = json["replies"].asArray().unwrap();
-                    auto processedReplies = std::vector<Reply>();
-                    for (auto _reply : replies){
-                       auto reply = _reply.as<Reply>();
-                       processedReplies.push_back(reply.unwrap());
-                    }
-                    this->populate(processedReplies);
-                }
-            } else {
-                auto json = res->json().unwrapOrDefault();
-                if (json.contains("err")){
-                    auto error = json["err"]["text"].asString().unwrapOr("");
-                    this->populate({},error);
-                } else {
-                    geode::log::error("Failed to load replies: {}",res->string().unwrapOr("Unknown"));
-                    this->populate({},"Something went wrong.");
-                }
-            }
-        }
-    });
     req.header("mod-version",MOD_VERSION_HEADER);
     auto url = fmt::format("{}/replies/{}/{}",SERVER_URL,m_commentID,this->m_page);
     geode::log::info("{}",url);
-    m_webListener.setFilter(req.get(url));
+    m_webListener.spawn(req.get(url),[this,loadingSpinner](web::WebResponse res){
+        loadingSpinner->removeFromParent();
+        if (res.ok()){
+            auto json = res.json().unwrapOrDefault();
+            if (json.contains("replies")){
+                this->m_maxPages = json["total_pages"].asInt().unwrapOr(1);
+                this->m_totalReplies = json["total"].asInt().unwrapOr(0);
+                auto replies = json["replies"].asArray().unwrap();
+                auto processedReplies = std::vector<Reply>();
+                for (auto _reply : replies){
+                    auto reply = _reply.as<Reply>();
+                    processedReplies.push_back(reply.unwrap());
+                }
+                this->populate(processedReplies);
+            }
+        } else {
+            auto json = res.json().unwrapOrDefault();
+            if (json.contains("err")){
+                auto error = json["err"]["text"].asString().unwrapOr("");
+                this->populate({},error);
+            } else {
+                geode::log::error("Failed to load replies: {}",res.string().unwrapOr("Unknown"));
+                this->populate({},"Something went wrong.");
+            }
+        }
+    });
 }
 
 void ReplyLayer::onUploadFailed(int code){

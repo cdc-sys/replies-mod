@@ -27,7 +27,7 @@ class ReplyCell : public CCNode {
     int m_skipLines;
     CCSprite* likeSpr;
     CCLabelBMFont* likeLabel;
-    EventListener<web::WebTask> m_webListener;
+    TaskHolder<web::WebResponse> m_webListener;
     void onReply(CCObject* sender);
     void onVote(CCObject* sender);
     void onDelete(CCObject* sender);

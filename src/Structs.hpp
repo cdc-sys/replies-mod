@@ -67,9 +67,9 @@ struct matjson::Serialize<Reply>
     {
         Reply reply = Reply();
         reply.content = value["content"].asString().unwrapOr("");
-        reply.author_id = value["author_id"].asInt().unwrapOr(0);
+        reply.author_id = geode::utils::numFromString<int64_t>(value["author_id"].asString().unwrapOr("0")).unwrapOr(0);
         reply.author_name = value["author_name"].asString().unwrapOr("");
-        reply.timestamp = value["timestamp"].asInt().unwrapOr(0);
+        reply.timestamp = geode::utils::numFromString<int64_t>(value["timestamp"].asString().unwrapOr("0")).unwrapOr(0);
         reply.id = value["id"].asString().unwrapOr("");
         reply.likes = value["likes"].asInt().unwrapOr(0);
         reply.reply_count = value["reply_count"].asInt().unwrapOr(0);
@@ -164,7 +164,7 @@ inline std::string toAgoString(int timestamp) {
     }
     return fmt::format("this is the secret string");
 }
-static constexpr const std::string_view SERVER_URL = "https://vfqrx5jx-6650.euw.devtunnels.ms";
+static constexpr const std::string_view SERVER_URL = "http://localhost:6650";
 static const std::string MOD_VERSION_HEADER = "testing.5";
 
 struct CacheEntry {

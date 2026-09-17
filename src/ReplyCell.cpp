@@ -6,7 +6,7 @@
 #include "Geode/cocos/menu_nodes/CCMenu.h"
 #include "Geode/ui/SimpleAxisLayout.hpp"
 #include "Structs.hpp"
-#include "MyLikeItemLayer.hpp"
+#include "ReplyVotingLayer.hpp"
 
 void ReplyCell::onReply(CCObject* sender){
     auto rl = ReplyLayer::create(m_reply);
@@ -16,36 +16,29 @@ void ReplyCell::onReply(CCObject* sender){
 void ReplyCell::onVote(CCObject* sender){
     if (VECTOR_HAS_ITEM(g_votedOn, this->m_reply.id)) return;
 
-    #ifndef GEODE_IS_MACOS
     if (m_reply.from_comment) return;
-    auto likeLayer = MyLikeItemLayer::createWrapper(this->m_reply.id,this);
+    auto likeLayer = ReplyVotingLayer::create(this->m_reply.id,this);
     likeLayer->show();
-    #else
-    FLAlertLayer::create("Ooooops","im lazy to do stuff so you don't get like popup on mac rn","okie")->show();
-    #endif
 }
 void ReplyCell::doDelete(){
     if (m_reply.from_comment) return;
     auto req = web::WebRequest();
-    this->m_webListener.bind([this](web::WebTask::Event* e){
-        if (auto res = e->getValue()) {
-            if (!res->ok()) {
-                auto json = res->json().unwrapOrDefault();
-                if (json.contains("err")){
-                    auto errorText = json["err"]["text"].asString().unwrapOr("Unknown");
-                    auto notif = geode::Notification::create(fmt::format("Failed to delete: {}",errorText),NotificationIcon::Error);
-                    notif->show();
-                }
-            } else {
-                m_rl->m_page = std::ceil((m_rl->m_totalReplies-2)/10)+1;
-                m_rl->loadReplies(true);
-            }
-        }
-    });
     auto url = fmt::format("{}/replies/{}/",SERVER_URL,m_reply.id);
     req.header("Authorization", Mod::get()->getSavedValue<std::string>("token"));
     req.header("mod-version",MOD_VERSION_HEADER);
-    this->m_webListener.setFilter(req.send("DELETE", url));
+    this->m_webListener.spawn(req.send("DELETE", url),[this](web::WebResponse res){
+        if (!res.ok()) {
+            auto json = res.json().unwrapOrDefault();
+            if (json.contains("err")){
+                auto errorText = json["err"]["text"].asString().unwrapOr("Unknown");
+                auto notif = geode::Notification::create(fmt::format("Failed to delete: {}",errorText),NotificationIcon::Error);
+                notif->show();
+            }
+        } else {
+            m_rl->m_page = std::ceil((m_rl->m_totalReplies-2)/10)+1;
+            m_rl->loadReplies(true);
+        }
+    });
 }
 void ReplyCell::onDelete(CCObject* sender){
     createQuickPopup("Delete Reply","Are you sure you want to <cr>delete</c> this reply?","No","Yes",[this](auto alert, bool btn2){
