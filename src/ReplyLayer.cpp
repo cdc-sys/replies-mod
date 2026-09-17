@@ -245,7 +245,7 @@ void ReplyLayer::populate(std::vector<Reply> const& replies,std::string const& m
 }
 
 void ReplyLayer::onUpload(CCObject* sender){
-    if (m_replyTextInput->getString().size() > 0){
+    if (!m_replyTextInput->getString().empty()){
         m_uploadBtn->setEnabled(false);
         auto req = web::WebRequest();
         req.header("Authorization", Mod::get()->getSavedValue<std::string>("token"));
