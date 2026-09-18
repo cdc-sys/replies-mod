@@ -21,6 +21,8 @@ class $modify(MyCommentCell, CommentCell) {
 		auto eryMenu = this->getChildByIDRecursive("raydeeux.variouscommenttweaks/the-menu-with-buttons-that-im-too-lazy-to-move-into-main-menu-sorry");
 		auto dateLabel = this->m_mainLayer->getChildByID("date-label");
 
+		if (!dateLabel) return;
+
 		auto replyLabel = CCSprite::createWithSpriteFrameName("GJ_undoBtn_001.png");
 		auto replyButton = CCMenuItemExt::createSpriteExtra(replyLabel, [comment](CCMenuItemSpriteExtra* btn){
 			auto replyLayer = ReplyLayer::create(comment);
@@ -33,12 +35,14 @@ class $modify(MyCommentCell, CommentCell) {
 			replyLabel->setScale(.45f);
 		}
 		else{
-			replyMenu->setPosition(dateLabel->getPositionX()-dateLabel->getScaledContentWidth()-10.f,8);
-			if (eryMenu) {
-				geode::log::info("test");
-				replyMenu->setPosition(eryMenu->getPositionX()-eryMenu->getScaledContentWidth()-5.f,8);
+			if (dateLabel) {
+				replyMenu->setPosition(dateLabel->getPositionX()-dateLabel->getScaledContentWidth()-10.f,8);
+				if (eryMenu) {
+					geode::log::info("test");
+					replyMenu->setPosition(eryMenu->getPositionX()-eryMenu->getScaledContentWidth()-5.f,8);
+				}
+				replyLabel->setScale(.30f);
 			}
-			replyLabel->setScale(.30f);
 		}
 
 		replyMenu->addChild(replyButton);

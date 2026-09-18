@@ -1,14 +1,16 @@
 #include "LoadingOverlay.hpp"
+
+using namespace geode::prelude;
+
 void LoadingOverlay::show() {
     auto scene = CCDirector::sharedDirector()->getRunningScene();
-    layerColor->runAction(
-        CCFadeTo::create(0.25f, 175));
+    layerColor->runAction(CCFadeTo::create(0.25f, 175));
     if (loadingTextLabel) {
-        loadingTextLabel->runAction(
-            CCFadeIn::create(0.25f));
+        loadingTextLabel->runAction(CCFadeIn::create(0.25f));
     }
     scene->addChild(this);
 }
+
 void LoadingOverlay::changeStatus(const char *status) {
     if (status) {
         if (loadingTextLabel) {
@@ -32,34 +34,42 @@ void LoadingOverlay::changeStatus(const char *status) {
         }
     }
 }
-void LoadingOverlay::nuke(CCObject *sender) {
-    this->removeFromParent();
-}
+
+void LoadingOverlay::keyBackClicked() {}
+
 void LoadingOverlay::fadeOut() {
     layerColor->runAction(
         CCSequence::create(
             CCFadeTo::create(0.25f, 0),
-            CCCallFuncO::create(this, callfuncO_selector(LoadingOverlay::nuke), this),
-            nullptr));
+            CallFuncExt::create([this](){
+                this->removeFromParent();
+            }),
+            nullptr
+        )
+    );
     if (loadingTextLabel) {
-        loadingTextLabel->runAction(
-            CCFadeTo::create(0.25f, 0));
+        loadingTextLabel->runAction(CCFadeTo::create(0.25f, 0));
     }
     loadingCircle->fadeAndRemove();
 }
+
 void LoadingOverlay::registerWithTouchDispatcher() {
-    CCDirector::sharedDirector()->getTouchDispatcher()->addTargetedDelegate(this, -9999, true);
+    CCTouchDispatcher::get()->addTargetedDelegate(this, -9999, true);
 }
+
+LoadingOverlay::~LoadingOverlay() {
+    CCTouchDispatcher::get()->removeDelegate(this);
+}
+
 bool LoadingOverlay::init() {
     if (!CCLayer::init()) {
         return false;
     }
     auto winSize = CCDirector::sharedDirector()->getWinSize();
-    this->registerWithTouchDispatcher();
+
     this->setTouchEnabled(true);
-    this->setTouchPriority(-9999);
-    this->setZOrder(CCDirector::get()->getRunningScene()->getHighestChildZ()+1);
-    // CCDirector::sharedDirector()->getTouchDispatcher()->registerForcePrio(this,-9999);
+    this->setKeypadEnabled(true);
+    this->setZOrder(CCDirector::get()->getRunningScene()->getHighestChildZ() + 1);
 
     // this->handler
     loadingCircle = LoadingCircle::create();
@@ -80,18 +90,20 @@ bool LoadingOverlay::init() {
     }
     return true;
 }
+
 LoadingOverlay *LoadingOverlay::create(const char *status) {
     auto ret = new LoadingOverlay();
     if (status) {
         ret->loadingTextLabel = CCLabelBMFont::create(status, "goldFont.fnt");
     }
-    if (ret && ret->init()) {
+    if (ret->init()) {
         ret->autorelease();
         return ret;
     }
-    CC_SAFE_DELETE(ret);
+    delete ret;
     return nullptr;
 }
+
 bool LoadingOverlay::ccTouchBegan(CCTouch *pTouch, CCEvent *pEvent) {
     return true;
 }
