@@ -4,15 +4,16 @@
 #include "Geode/utils/web.hpp"
 #include "Geode/modify/MenuLayer.hpp"
 
-class MyUploadDelegate : public UploadMessageDelegate {
+class MyUploadDelegate : public CommentUploadDelegate {
     Auth* m_auth;
-    void uploadMessageFailed(int p0) override {
+    void commentUploadFailed(int p0, CommentError err) override {
         m_auth->m_loading->fadeOut();
         FLAlertLayer::create("Oops!", "Sending message failed due to an unknown error, please try again later.", "OK")->show();
     }
-    void uploadMessageFinished(int p0) override {
+    void commentUploadFinished(int p0) override {
         m_auth->m_loading->changeStatus("Authenticating [3/3]");
         m_auth->step3();
+        geode::log::info("{}",p0);
     }
     public:
     static MyUploadDelegate* create(Auth* auth) {
@@ -109,8 +110,8 @@ void Auth::step3(){
 
 void Auth::step2(const char* code){
     auto GLM = GameLevelManager::get();
-	GLM->m_uploadMessageDelegate = MyUploadDelegate::create(this);
-	GLM->uploadUserMessage(28167925,code,"This is an authentication message for the \"Replies\" mod.\nIf you see this, please delete it!");
+    GLM->m_commentUploadDelegate = MyUploadDelegate::create(this);
+	GLM->uploadLevelComment(149306118,code,0);
 }
 
 void Auth::step1(){
