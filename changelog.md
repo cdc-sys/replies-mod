@@ -1,3 +1,6 @@
+# 1.0.3
+- Implemented Argon authentification.
+
 # 1.0.2
 - Fix crash when deleting a comment.
 - Fix touch priority issues with LoadingOverlay.

@@ -5,29 +5,6 @@
 #include "Geode/modify/MenuLayer.hpp"
 #include <argon/argon.hpp>
 
-class MyUploadDelegate : public CommentUploadDelegate {
-    Auth* m_auth;
-    void commentUploadFailed(int p0, CommentError err) override {
-        m_auth->m_loading->fadeOut();
-        FLAlertLayer::create("Oops!", "Sending message failed due to an unknown error, please try again later.", "OK")->show();
-    }
-    void commentUploadFinished(int p0) override {
-        m_auth->m_loading->changeStatus("Authenticating [3/3]");
-        m_auth->step3();
-        geode::log::info("{}",p0);
-    }
-    public:
-    static MyUploadDelegate* create(Auth* auth) {
-        MyUploadDelegate* ret = new MyUploadDelegate();
-        ret->m_auth = auth;
-        if (ret) {
-            return ret;
-        }
-        CC_SAFE_DELETE(ret);
-        return nullptr;
-    }
-};
-
 void Auth::handleError(web::WebResponse res){
     auto json = res.json().unwrapOrDefault();
     if (json.contains("err")){
@@ -42,6 +19,15 @@ void Auth::handleError(web::WebResponse res){
     }
     this->release();
 }
+
+void Auth::handleError(std::string error){
+    auto errorText = error;
+    auto alert = FLAlertLayer::create("Uh Oh!",fmt::format("<cr>Auth failed: {}</c>",errorText).c_str(),"OK");
+    alert->show();
+    m_loading->fadeOut();
+    this->release();
+}
+
 int whichIcon() {
     GameManager* gm = GameManager::get();
     switch (gm->m_playerIconType) {
@@ -121,6 +107,7 @@ void Auth::step1(){
                     auto token = std::move(result).unwrap();
                     this->step2(token);
                 } else {
+                    this->handleError("There was an error while obtaining your Argon token.");
                     log::warn("Failed to authenticate: {}", result.unwrapErr());
                 }
             }
@@ -133,7 +120,7 @@ void Auth::start(){
     // step 3. POST request https://{}/auth/validate
     this->retain();
     m_loading = LoadingOverlay::create();
-    m_loading->changeStatus("Authenticating [1/3]");
+    m_loading->changeStatus("Authenticating...");
     m_loading->show();
     step1();
 }

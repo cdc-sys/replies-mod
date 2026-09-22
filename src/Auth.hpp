@@ -13,9 +13,9 @@ class Auth : public cocos2d::CCObject {
     void step1();
     void step2(std::string& code);
     void handleError(web::WebResponse res);
+    void handleError(std::string error);
     public:
     LoadingOverlay* m_loading;
-    void step3();
     void start();
     void send_icons();
     static Auth* create(ReplyLayer* rl);
