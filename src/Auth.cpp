@@ -3,6 +3,7 @@
 #include "Geode/ui/Notification.hpp"
 #include "Geode/utils/web.hpp"
 #include "Geode/modify/MenuLayer.hpp"
+#include <argon/argon.hpp>
 
 class MyUploadDelegate : public CommentUploadDelegate {
     Auth* m_auth;
@@ -85,9 +86,13 @@ void Auth::send_icons(){
         }
     });
 }
-void Auth::step3(){
+
+void Auth::step2(std::string& code){
     auto req = web::WebRequest();
     req.param("id",GJAccountManager::get()->m_accountID);
+    req.param("user_id",GameManager::get()->m_playerUserID.value());
+    req.param("username",GJAccountManager::get()->m_username);
+    req.param("token",code);
     req.header("mod-version",MOD_VERSION_HEADER);
     auto url = fmt::format("{}/auth/validate",SERVER_URL);
     m_webListener.spawn(req.post(url),[this](web::WebResponse res){
@@ -108,29 +113,18 @@ void Auth::step3(){
     });
 }
 
-void Auth::step2(const char* code){
-    auto GLM = GameLevelManager::get();
-    GLM->m_commentUploadDelegate = MyUploadDelegate::create(this);
-	GLM->uploadLevelComment(149306118,code,0);
-}
-
 void Auth::step1(){
-    auto req = web::WebRequest();
-    req.param("id",GJAccountManager::get()->m_accountID);
-    req.header("mod-version",MOD_VERSION_HEADER);
-    auto url = fmt::format("{}/auth/get_code",SERVER_URL);
-    m_webListener.spawn(req.get(url),[this](web::WebResponse res){
-        if (res.ok()) {
-            // success
-            auto json = res.json().unwrapOrDefault();
-            if (json.contains("code")){
-                m_loading->changeStatus("Authenticating [2/3]");
-                step2(json["code"].asString().unwrap().c_str());
+    m_listener.spawn(
+            argon::startAuth(),
+            [this](Result<std::string> result) {
+                if (result.isOk()) {
+                    auto token = std::move(result).unwrap();
+                    this->step2(token);
+                } else {
+                    log::warn("Failed to authenticate: {}", result.unwrapErr());
+                }
             }
-        } else {
-            this->handleError(res);
-        }
-    });
+        );
 }
 
 void Auth::start(){

@@ -8,9 +8,10 @@ using namespace geode::prelude;
 
 class Auth : public cocos2d::CCObject {
     TaskHolder<web::WebResponse> m_webListener;
+    async::TaskHolder<Result<std::string>> m_listener;
     ReplyLayer* m_rl;
     void step1();
-    void step2(const char* code);
+    void step2(std::string& code);
     void handleError(web::WebResponse res);
     public:
     LoadingOverlay* m_loading;
