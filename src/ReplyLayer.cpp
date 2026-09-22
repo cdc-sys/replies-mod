@@ -77,7 +77,10 @@ void ReplyLayer::addReplyUI(){
 bool ReplyLayer::init(std::string const& commentID){
     if (!Popup::init(375,290)) return false; 
 
-    sortMode = Mod::get()->getSavedValue<std::string>("sort_mode");
+    std::string savedSortMode = Mod::get()->getSavedValue<std::string>("sort_mode");
+    if (!savedSortMode.empty()) {
+        sortMode = savedSortMode;
+    }
 
     this->setTitle("Replies");
 
