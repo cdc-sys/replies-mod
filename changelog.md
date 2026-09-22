@@ -1,3 +1,6 @@
+# 1.0.4
+- Implemented sorting modes in ReplyLayer.
+
 # 1.0.3
 - Implemented Argon authentification.
 

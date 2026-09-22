@@ -77,6 +77,8 @@ void ReplyLayer::addReplyUI(){
 bool ReplyLayer::init(std::string const& commentID){
     if (!Popup::init(375,290)) return false; 
 
+    sortMode = Mod::get()->getSavedValue<std::string>("sort_mode");
+
     this->setTitle("Replies");
 
     auto winSize = CCDirector::sharedDirector()->getWinSize();
@@ -127,6 +129,53 @@ bool ReplyLayer::init(std::string const& commentID){
     reloadBtn->setPosition({20.f,270.f});
     reloadSpr->setScale(0.5f);
     this->m_buttonMenu->addChild(reloadBtn);
+
+    auto sortModeMenu = CCMenu::create();
+    std::vector<std::pair<std::string,std::string>> sortingModes = {{"likes","GJ_likesIcon_001.png"},{"dislikes","GJ_dislikesIcon_001.png"},{"newest","GJ_sRecentIcon_001.png"},{"oldest","d_time01_001.png"}};
+    for (auto sort : sortingModes) {
+        auto sprite = CCSprite::create("GJ_button_01.png");
+        if (sort.first == sortMode) sprite = CCSprite::create("GJ_button_02.png");
+        sprite->setScale(0.5f);
+
+        auto toggler = CCMenuItemExt::createSpriteExtra(sprite, [this,sort](CCMenuItemSpriteExtra* me) {
+            this->sortMode = sort.first;
+            this->m_page = 1;
+            this->loadReplies(true);
+            auto onSprite = CCSprite::create("GJ_button_02.png");
+            auto offSprite = CCSprite::create("GJ_button_01.png");
+
+            onSprite->setScale(0.5f);
+            offSprite->setScale(0.5f);
+
+            for (auto child : me->getParent()->getChildrenExt()) {
+                typeinfo_cast<CCMenuItemSpriteExtra*>(child)->setSprite(offSprite);
+            }
+            me->setSprite(onSprite);
+            me->getParent()->updateLayout();
+            
+            Mod::get()->setSavedValue<std::string>("sort_mode", sort.first);
+        });
+
+        auto sortIcon = CCSprite::createWithSpriteFrameName(sort.second.c_str());
+        sortIcon->setScale(12/sortIcon->getContentWidth());
+        sortIcon->setPosition({toggler->getContentWidth()/2,toggler->getContentHeight()/2});
+        sortIcon->setZOrder(999);
+        if (sort.first == "dislikes") sortIcon->setContentHeight(24.f); // robtop why the fuckkk is your texture fucked up like this
+        toggler->addChild(sortIcon);
+
+        sortModeMenu->addChild(toggler);
+    }
+
+    auto layout = AxisLayout::create(Axis::Row);
+    layout->setAutoGrowAxis(1.f);
+    layout->setGap(3.f);
+    sortModeMenu->setLayout(layout);
+    sortModeMenu->updateLayout();
+
+    sortModeMenu->setPosition({40.f,270.f});
+    sortModeMenu->setAnchorPoint({0,0.5});
+
+    this->m_mainLayer->addChild(sortModeMenu);
 
     auto prevSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
     auto nextSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
@@ -326,6 +375,7 @@ void ReplyLayer::loadReplies(bool force){
     spinnerSprite->setOpacity(200);
 
     req.header("mod-version",MOD_VERSION_HEADER);
+    req.param("sort",sortMode);
     auto url = fmt::format("{}/replies/{}/{}",SERVER_URL,m_commentID,this->m_page);
     geode::log::info("{}",url);
     m_webListener.spawn(req.get(url),[this,loadingSpinner](web::WebResponse res){

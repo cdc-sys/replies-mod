@@ -24,6 +24,8 @@ class ReplyLayer : public geode::Popup {
     GJComment* m_comment;
     Reply m_reply;
 
+    std::string sortMode="likes";
+
     bool init(std::string const& commentID);
     void populate(std::vector<Reply> const& replies,std::string const& message="");
     float iterate(Reply reply,int replyLevel,Reply parentReply={},int skip=0);
