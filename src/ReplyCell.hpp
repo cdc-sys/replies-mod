@@ -23,7 +23,7 @@ enum ReplySpriteType {
 
 class ReplyCell : public CCNode {
     ReplyBackgroundColor m_bgColor;
-    ReplyLayer* m_rl;
+    RepliesBasePaginatedLayer* m_rl;
     int m_replyLevel;
     int m_skipLines;
     int m_skipLinesRight;
@@ -40,5 +40,5 @@ class ReplyCell : public CCNode {
     Reply m_reply;
     ReplySpriteType m_spriteType;
     void updateLikes(int likes);
-    static ReplyCell* create(ReplyLayer* rl,Reply reply,ReplyBackgroundColor bgColor=Regular, int replyLevel=1, ReplySpriteType spriteType=Line,int skipLines=0,int skipLinesRight=0);
+    static ReplyCell* create(RepliesBasePaginatedLayer* rl,Reply reply,ReplyBackgroundColor bgColor=Regular, int replyLevel=1, ReplySpriteType spriteType=Line,int skipLines=0,int skipLinesRight=0);
 };

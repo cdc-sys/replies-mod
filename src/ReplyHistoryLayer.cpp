@@ -217,7 +217,7 @@ void ReplyHistoryLayer::populate(std::vector<Reply> const& replies,std::string c
     totalHeight += topCell->getContentSize().height;*/
     this->_m_darker = true;
     for (auto reply : replies) {
-        auto replyCell = ReplyCell::create(nullptr,reply,(_m_darker ? ReplyBackgroundColor::Darker : ReplyBackgroundColor::Regular),0,ReplySpriteType::Line,0,0);
+        auto replyCell = ReplyCell::create(this,reply,(_m_darker ? ReplyBackgroundColor::Darker : ReplyBackgroundColor::Regular),0,ReplySpriteType::Line,0,0);
         totalHeight += replyCell->getContentHeight();
         m_scrollLayer->m_contentLayer->addChild(replyCell);
         this->_m_darker = !this->_m_darker;

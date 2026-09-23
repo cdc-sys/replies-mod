@@ -310,7 +310,7 @@ bool ReplyCell::init(bool fromFetch){
     likeLabel = CCLabelBMFont::create("0","bigFont.fnt");
     likeMenu->addChild(likeLabel);
     likeMenu->addChild(likeBtn);
-    if ((g_permissions >= ModerationPermissions::CommentModeration || m_reply.author_id == GJAccountManager::get()->m_accountID) && !m_reply.from_comment){
+    if ((g_permissions >= ModerationPermissions::Moderator || m_reply.author_id == GJAccountManager::get()->m_accountID) && !m_reply.from_comment){
         auto deleteSpr = CCSprite::createWithSpriteFrameName("GJ_deleteIcon_001.png");
         auto deleteBtn = CCMenuItemSpriteExtra::create(deleteSpr,this,menu_selector(ReplyCell::onDelete));
         likeMenu->addChild(deleteBtn);
@@ -360,7 +360,7 @@ void ReplyCell::updateLikes(int likes){
     likeSpr->setContentSize(cs);
 }
 
-ReplyCell* ReplyCell::create(ReplyLayer* rl,Reply reply,ReplyBackgroundColor bgColor, int replyLevel,ReplySpriteType spriteType, int skipLines, int skipLinesRight){
+ReplyCell* ReplyCell::create(RepliesBasePaginatedLayer* rl,Reply reply,ReplyBackgroundColor bgColor, int replyLevel,ReplySpriteType spriteType, int skipLines, int skipLinesRight){
     auto ret = new ReplyCell();
     ret->m_rl = rl;
     ret->m_reply = reply;

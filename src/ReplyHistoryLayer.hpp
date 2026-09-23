@@ -5,7 +5,7 @@
 
 using namespace geode::prelude;
 
-class ReplyHistoryLayer : public geode::Popup {
+class ReplyHistoryLayer : public RepliesBasePaginatedLayer {
     int m_accountID;
     geode::TextInput* m_replyTextInput;
     CCMenuItemSpriteExtra* m_uploadBtn;
@@ -38,6 +38,6 @@ class ReplyHistoryLayer : public geode::Popup {
 
     void show() override; 
     void loadReplies(bool force);
-    
+
     static ReplyHistoryLayer* create(int accountID);
 };

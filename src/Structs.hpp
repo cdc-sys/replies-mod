@@ -196,14 +196,22 @@ static bool g_syncedIcons = false;
 
 enum class ModerationPermissions {
     None = 0,
-    CommentModeration = 1,
-    UserModeration = 2,
+    Moderator = 1,
+    Administrator = 2,
     FullAccess = 3
 };
 
 enum class Mode {
     LargeCells,
     CompactCells
+};
+class RepliesBasePaginatedLayer : public geode::Popup {
+    public:
+    void loadReplies(bool force);
+    Mode m_displayMode=Mode::CompactCells;
+    int m_page=1;
+    int m_maxPages=1;
+    int m_totalReplies=0;
 };
 
 static ModerationPermissions g_permissions = (ModerationPermissions)Mod::get()->getSavedValue<int64_t>("moderation_permissions");

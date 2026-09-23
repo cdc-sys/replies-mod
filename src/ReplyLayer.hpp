@@ -4,7 +4,7 @@
 #include <Geode/utils/web.hpp>
 
 using namespace geode::prelude;
-class ReplyLayer : public geode::Popup {
+class ReplyLayer : public RepliesBasePaginatedLayer {
     std::string m_commentID;
     geode::TextInput* m_replyTextInput;
     CCMenuItemSpriteExtra* m_uploadBtn;
