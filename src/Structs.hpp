@@ -207,7 +207,7 @@ enum class Mode {
 };
 class RepliesBasePaginatedLayer : public geode::Popup {
     public:
-    void loadReplies(bool force);
+    void loadReplies(bool force) {};
     Mode m_displayMode=Mode::CompactCells;
     int m_page=1;
     int m_maxPages=1;

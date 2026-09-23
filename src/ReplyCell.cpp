@@ -7,6 +7,7 @@
 #include "Geode/ui/SimpleAxisLayout.hpp"
 #include "Structs.hpp"
 #include "ReplyVotingLayer.hpp"
+#include "ReplyReportLayer.hpp"
 
 void ReplyCell::onReply(CCObject* sender){
     auto rl = ReplyLayer::create(m_reply);
@@ -316,7 +317,10 @@ bool ReplyCell::init(bool fromFetch){
         likeMenu->addChild(deleteBtn);
     } else {
         auto reportSpr = CCSprite::createWithSpriteFrameName("reportBtn.png"_spr);
-        auto reportBtn = CCMenuItemExt::createSpriteExtra(reportSpr, [](auto){});
+        auto reportBtn = CCMenuItemExt::createSpriteExtra(reportSpr, [this](auto){
+            auto reportLayer = ReplyReportLayer::create(this->m_reply);
+            reportLayer->show();
+        });
         likeMenu->addChild(reportBtn);
     }
     if (!m_reply.from_comment && this->m_bgColor != Highlighted) likeMenu->addChild(replyBtn);
