@@ -75,85 +75,145 @@ void scaleAreaToFit(SimpleTextArea* area,float max){
     }*/
 
 }
-bool ReplyCell::init(){
-    if (!CCNode::init()) return false;
-    // og width 36
-    float offset = 23*m_replyLevel;
-    this->setContentSize({335.f-offset,36.f});
-    if (m_rl->m_displayMode==Mode::LargeCells){
-        this->setContentHeight(90.f);
-    }
 
+void ReplyCell::fetchContent() {
+    auto loadingSpinner = LoadingCircle::create();
+    loadingSpinner->setContentSize(this->getContentSize());
+    loadingSpinner->setPosition(this->getPosition());
+
+    // why do i have to do this?
+    auto spinnerSprite = loadingSpinner->m_sprite;
+    spinnerSprite->setPosition({loadingSpinner->getContentWidth()/2,loadingSpinner->getContentHeight()/2.5f});
+    spinnerSprite->setScale(0.3f);
+
+    // there's apparently no way to stop the fading without just.. remaking the entire show function LOLLL
+    this->addChild(loadingSpinner);
+    spinnerSprite->runAction(CCRepeatForever::create(CCRotateBy::create(1,360)));
+    spinnerSprite->setBlendFunc({ GL_ONE, GL_ONE });
+    spinnerSprite->setOpacity(200);
+
+    auto req = web::WebRequest();
+
+    req.header("mod-version",MOD_VERSION_HEADER);
+    auto url = fmt::format("{}/reply/{}/",SERVER_URL,m_reply.id);
+    geode::log::info("{}",url);
+    m_webListener.spawn(req.get(url),[this,loadingSpinner](web::WebResponse res){
+        loadingSpinner->removeFromParent();
+        if (res.ok()){
+            auto json = res.json().unwrapOrDefault();
+            if (json.contains("replies")){
+                auto json_reply = json.as<Reply>().unwrapOrDefault();
+                json_reply.needs_web_fetch = false;
+                this->m_reply = json_reply;
+                this->init(true);
+            }
+        } else {
+            auto json = res.json().unwrapOrDefault();
+            if (json.contains("err")){
+                auto error = json["err"]["text"].asString().unwrapOr("");
+                this->m_reply.needs_web_fetch = false;
+                this->m_reply.author_name = "Unknown";
+                this->m_reply.content = fmt::format("[ Failed to load: {} ]",error);
+                this->init(true);
+            } else {
+                geode::log::error("Failed to load replies: {}",res.string().unwrapOr("Unknown"));
+                this->m_reply.needs_web_fetch = false;
+                this->m_reply.author_name = "Unknown";
+                this->m_reply.content = "[ Failed to load ]";
+                this->init(true);
+            }
+        }
+    });
+}
+
+bool ReplyCell::init(bool fromFetch){
     bool moreReplies = this->m_spriteType == ReplySpriteType::MoreReplies;
 
-    if (moreReplies) {
-        this->setContentHeight(23.f);
+    if (!fromFetch) {
+        if (!CCNode::init()) return false;
+
+        // og width 36
+        float offset = 23*m_replyLevel;
+        this->setContentSize({335.f-offset,36.f});
+        if (m_rl && m_rl->m_displayMode==Mode::LargeCells){
+            this->setContentHeight(90.f);
+        }
+
+        if (moreReplies) {
+            this->setContentHeight(23.f);
+        }
+
+        auto line = CCLayerColor::create();
+        line->setColor({0,0,0});
+        line->setContentSize({this->getContentSize().width,.425f});
+        line->setOpacity(125);
+        this->addChild(line);
+
+        auto line2 = CCLayerColor::create();
+        line2->setColor({0,0,0});
+        line2->setContentSize({.425f,this->getContentHeight()});
+        line2->setOpacity(125);
+        this->addChild(line2);
+
+        auto bg2 = CCLayerColor::create();
+        bg2->setColor({0,0,0});
+        bg2->setOpacity(120);
+        bg2->setContentSize({offset,this->getContentSize().height});
+        bg2->setAnchorPoint({0,0});
+        bg2->setPosition({-offset,0});
+        this->addChild(bg2);
+
+        std::vector<ccColor3B> line_colours = {
+            {255, 0, 255},
+            {0,255,0},
+            {0, 234, 255},
+            {255, 242, 0}
+        };
+
+        bool colouredBranchesEnabled = Mod::get()->getSettingValue<bool>("coloured-branches");
+        
+        for (int i = m_skipLinesRight; i<m_replyLevel-m_skipLines; i++){
+            if (moreReplies && i == 0) continue;
+            auto spriteName = fmt::format("reply-{}.png"_spr,(i>0 ? 1 : (int)this->m_spriteType+1));
+            auto sprite = CCSprite::createWithSpriteFrameName(spriteName.c_str());
+            sprite->setScale(23/sprite->getContentWidth());
+            if (moreReplies) sprite->setScaleY(23/sprite->getContentHeight());
+            //sprite->setScale(4.f);
+            sprite->setOpacity(50);
+            sprite->setAnchorPoint({0,0});
+            sprite->setPosition({-23.f*(i+1),0});
+            if (colouredBranchesEnabled) {
+                sprite->setColor(line_colours[abs(m_replyLevel-m_skipLines-i) % 4]);
+                sprite->setOpacity(100);
+            }
+            this->addChild(sprite);
+        }
+
+        auto bg = CCLayerColor::create();
+        switch (m_bgColor){
+            case ReplyBackgroundColor::Highlighted: {
+                bg->setColor({ 255, 208, 0 });
+                break;
+            }
+            case ReplyBackgroundColor::Darker: {
+                bg->setColor({0,0,0});
+                break;
+            }
+            case ReplyBackgroundColor::Regular: {
+                bg->setVisible(false);
+                break;
+            }
+        }
+        bg->setOpacity(50);
+        bg->setContentSize(this->getContentSize());
+        this->addChild(bg);
+
     }
 
-    auto line = CCLayerColor::create();
-    line->setColor({0,0,0});
-    line->setContentSize({this->getContentSize().width,.425f});
-    line->setOpacity(125);
-    this->addChild(line);
-
-    auto line2 = CCLayerColor::create();
-    line2->setColor({0,0,0});
-    line2->setContentSize({.425f,this->getContentHeight()});
-    line2->setOpacity(125);
-    this->addChild(line2);
-
-    auto bg2 = CCLayerColor::create();
-    bg2->setColor({0,0,0});
-    bg2->setOpacity(120);
-    bg2->setContentSize({offset,this->getContentSize().height});
-    bg2->setAnchorPoint({0,0});
-    bg2->setPosition({-offset,0});
-    this->addChild(bg2);
-
-    std::vector<ccColor3B> line_colours = {
-        {255, 0, 255},
-        {0,255,0},
-        {0, 234, 255},
-        {255, 242, 0}
-    };
-
-    bool colouredBranchesEnabled = Mod::get()->getSettingValue<bool>("coloured-branches");
-    
-    for (int i = m_skipLinesRight; i<m_replyLevel-m_skipLines; i++){
-        if (moreReplies && i == 0) continue;
-        auto spriteName = fmt::format("reply-{}.png"_spr,(i>0 ? 1 : (int)this->m_spriteType+1));
-        auto sprite = CCSprite::createWithSpriteFrameName(spriteName.c_str());
-        sprite->setScale(23/sprite->getContentWidth());
-        if (moreReplies) sprite->setScaleY(23/sprite->getContentHeight());
-        //sprite->setScale(4.f);
-        sprite->setOpacity(50);
-        sprite->setAnchorPoint({0,0});
-        sprite->setPosition({-23.f*(i+1),0});
-        if (colouredBranchesEnabled) {
-            sprite->setColor(line_colours[abs(m_replyLevel-m_skipLines-i) % 4]);
-            sprite->setOpacity(100);
-        }
-        this->addChild(sprite);
+    if (m_reply.needs_web_fetch) {
+        this->fetchContent();
+        return true;
     }
-
-    auto bg = CCLayerColor::create();
-    switch (m_bgColor){
-        case ReplyBackgroundColor::Highlighted: {
-            bg->setColor({ 255, 208, 0 });
-            break;
-        }
-        case ReplyBackgroundColor::Darker: {
-            bg->setColor({0,0,0});
-            break;
-        }
-        case ReplyBackgroundColor::Regular: {
-            bg->setVisible(false);
-            break;
-        }
-    }
-    bg->setOpacity(50);
-    bg->setContentSize(this->getContentSize());
-    this->addChild(bg);
     
     float playerIconOffset = 0.f;
     if (!m_reply.account_comment && !moreReplies){
@@ -212,10 +272,10 @@ bool ReplyCell::init(){
     //contentLabel->setMaxLines(2);
     contentLabel->setWrappingMode(WrappingMode::WORD_WRAP);
     if (m_reply.content.find(" ")==-1) contentLabel->setWrappingMode(WrappingMode::CUTOFF_WRAP);
-    if (m_rl->m_displayMode==Mode::CompactCells) contentLabel->setPosition({5.f,this->getContentHeight()-18.f});
-    if (m_rl->m_displayMode==Mode::LargeCells) contentLabel->setPosition({5.f,this->getContentHeight()/2});
+    contentLabel->setPosition({5.f,this->getContentHeight()-18.f});
+    if (m_rl && m_rl->m_displayMode==Mode::LargeCells) contentLabel->setPosition({5.f,this->getContentHeight()/2});
     contentLabel->setAnchorPoint({0,1});
-    if (m_rl->m_displayMode==Mode::LargeCells) contentLabel->setAnchorPoint({0,0.5});
+    if (m_rl && m_rl->m_displayMode==Mode::LargeCells) contentLabel->setAnchorPoint({0,0.5});
     //if (contentLabel->getLines().size()>=2) {contentLabel->setScale(0.45f);if (contentLabel->getLines().size()==1){contentLabel->setPositionY(contentLabel->getPositionY()-contentLabel->getScaledContentHeight()/2);}}
     scaleAreaToFit(contentLabel,16.f);
     this->addChild(contentLabel);
@@ -254,8 +314,24 @@ bool ReplyCell::init(){
         auto deleteSpr = CCSprite::createWithSpriteFrameName("GJ_deleteIcon_001.png");
         auto deleteBtn = CCMenuItemSpriteExtra::create(deleteSpr,this,menu_selector(ReplyCell::onDelete));
         likeMenu->addChild(deleteBtn);
+    } else {
+        auto reportSpr = CCSprite::createWithSpriteFrameName("reportBtn.png"_spr);
+        auto reportBtn = CCMenuItemExt::createSpriteExtra(reportSpr, [](auto){});
+        likeMenu->addChild(reportBtn);
     }
     if (!m_reply.from_comment && this->m_bgColor != Highlighted) likeMenu->addChild(replyBtn);
+
+    if (!m_reply.comment_id.empty()) {
+        auto buttonSprite = ButtonSprite::create(m_reply.comment_id.c_str(),120,50,1.f,false);
+        auto parentButton = CCMenuItemExt::createSpriteExtra(buttonSprite, [this](auto) {
+            auto fake_reply = Reply();
+            fake_reply.needs_web_fetch = true;
+            fake_reply.id = m_reply.comment_id;
+            auto rl = ReplyLayer::create(fake_reply);
+            rl->show();
+        });
+        likeMenu->addChild(parentButton);
+    }
     auto layout = AxisLayout::create(Axis::Row);
     layout->setAxisReverse(true);
     layout->setAutoGrowAxis(1.f);

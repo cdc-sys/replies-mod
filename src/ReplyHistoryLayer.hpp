@@ -4,8 +4,9 @@
 #include <Geode/utils/web.hpp>
 
 using namespace geode::prelude;
-class ReplyLayer : public geode::Popup {
-    std::string m_commentID;
+
+class ReplyHistoryLayer : public geode::Popup {
+    int m_accountID;
     geode::TextInput* m_replyTextInput;
     CCMenuItemSpriteExtra* m_uploadBtn;
     CCMenuItemSpriteExtra* m_prevBtn;
@@ -22,13 +23,9 @@ class ReplyLayer : public geode::Popup {
 
     std::string sortMode="likes";
 
-    bool init(std::string const& commentID);
+    bool init();
     void populate(std::vector<Reply> const& replies,std::string const& message="");
-    float iterate(Reply reply,int replyLevel,Reply parentReply={},int skip=0);
-    void onUpload(CCObject* sender);
     void onReload(CCObject* sender);
-    void onAuthenticate(CCObject* sender);
-    void onUploadFailed(int code);
 
     public:
 
@@ -41,9 +38,6 @@ class ReplyLayer : public geode::Popup {
 
     void show() override; 
     void loadReplies(bool force);
-    void addReplyUI();
-    void onClose(CCObject*sender) override;
-
-    static ReplyLayer* create(GJComment* comment);
-    static ReplyLayer* create(Reply reply);
+    
+    static ReplyHistoryLayer* create(int accountID);
 };

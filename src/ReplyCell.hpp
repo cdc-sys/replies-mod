@@ -34,7 +34,8 @@ class ReplyCell : public CCNode {
     void onVote(CCObject* sender);
     void onDelete(CCObject* sender);
     void doDelete();
-    bool init() override; 
+    void fetchContent();
+    bool init(bool fromFetch=false); 
     public:
     Reply m_reply;
     ReplySpriteType m_spriteType;

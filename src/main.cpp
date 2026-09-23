@@ -1,10 +1,13 @@
 #include "Geode/cocos/menu_nodes/CCMenuItem.h"
 #include <Geode/Geode.hpp>
 #include "ReplyLayer.hpp"
+#include "ReplyHistoryLayer.hpp"
 
 using namespace geode::prelude;
 
+#include <Geode/modify/ProfilePage.hpp>
 #include <Geode/modify/CommentCell.hpp>
+
 class $modify(MyCommentCell, CommentCell) {
 	struct Fields {
 		bool replyButtonAdded = false;
@@ -47,5 +50,21 @@ class $modify(MyCommentCell, CommentCell) {
 
 		replyMenu->addChild(replyButton);
 		this->m_mainLayer->addChild(replyMenu);
+	}
+};
+
+class $modify(MyProfilePage,ProfilePage) {
+	bool init(int accountID, bool ownProfile) {
+		if (!ProfilePage::init(accountID, ownProfile)) return false;
+		
+		auto myFuckassButtonSpr = CCSprite::createWithSpriteFrameName("GJ_undoBtn_001.png");
+		auto myFuckassButton = CCMenuItemExt::createSpriteExtra(myFuckassButtonSpr, [accountID](auto){
+			ReplyHistoryLayer::create(accountID)->show();
+		});
+
+		this->getChildByIDRecursive("left-menu")->addChild(myFuckassButton);
+		this->getChildByIDRecursive("left-menu")->updateLayout();
+
+		return true;
 	}
 };

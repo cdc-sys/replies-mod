@@ -24,6 +24,7 @@ struct Reply {
     int64_t likes;
     int64_t reply_count;
     IconData icon;
+    std::string comment_id;
 
     // misc
     bool from_comment=false;
@@ -31,6 +32,9 @@ struct Reply {
     std::string comment_timestamp;
     std::vector<Reply> replies;
     bool last=false;
+    
+    bool needs_web_fetch=false;
+
     Reply* parent=nullptr;
 };
 
@@ -70,6 +74,7 @@ struct matjson::Serialize<Reply>
         reply.author_id = geode::utils::numFromString<int64_t>(value["author_id"].asString().unwrapOr("0")).unwrapOr(0);
         reply.author_name = value["author_name"].asString().unwrapOr("");
         reply.timestamp = geode::utils::numFromString<int64_t>(value["timestamp"].asString().unwrapOr("0")).unwrapOr(0);
+        reply.comment_id = value["comment_id"].asString().unwrapOr("");
         reply.id = value["id"].asString().unwrapOr("");
         reply.likes = value["likes"].asInt().unwrapOr(0);
         reply.reply_count = value["reply_count"].asInt().unwrapOr(0);
@@ -85,6 +90,7 @@ struct matjson::Serialize<Reply>
         obj["author_id"] = value.author_id;
         obj["author_name"] = value.author_name;
         obj["timestamp"] = value.timestamp;
+        obj["comment_id"] = value.comment_id;
         obj["id"] = value.id;
         obj["likes"] = value.likes;
         obj["reply_count"] = value.reply_count;
@@ -164,7 +170,8 @@ inline std::string toAgoString(int timestamp) {
     }
     return fmt::format("this is the secret string");
 }
-static constexpr const std::string_view SERVER_URL = "https://replies.cdc-sys.com";
+// https://replies.cdc-sys.com
+static constexpr const std::string_view SERVER_URL = "http://localhost:6650";
 static const std::string MOD_VERSION_HEADER = Mod::get()->getVersion().toVString();
 
 struct CacheEntry {
@@ -192,6 +199,11 @@ enum class ModerationPermissions {
     CommentModeration = 1,
     UserModeration = 2,
     FullAccess = 3
+};
+
+enum class Mode {
+    LargeCells,
+    CompactCells
 };
 
 static ModerationPermissions g_permissions = (ModerationPermissions)Mod::get()->getSavedValue<int64_t>("moderation_permissions");
