@@ -289,8 +289,7 @@ inline std::string toAgoString(int64_t timestamp) {
     return fmt::format("this is the secret string");
 }
 
-// https://replies.cdc-sys.com
-static constexpr const std::string_view SERVER_URL = "http://localhost:6650";
+static constexpr const std::string_view SERVER_URL = "https://replies.cdc-sys.com";
 static const std::string MOD_VERSION_HEADER = Mod::get()->getVersion().toVString();
 
 struct CacheEntry {
