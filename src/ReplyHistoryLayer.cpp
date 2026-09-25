@@ -198,11 +198,11 @@ void ReplyHistoryLayer::populate(std::vector<Reply> const& replies,std::string c
     else m_nextBtn->setVisible(true);
     reloadBtn->setEnabled(true);
 
-    /*g_replyCache[m_commentID].message = message;
-    g_replyCache[m_commentID].max_pages = this->m_maxPages;
-    g_replyCache[m_commentID].total_replies = this->m_totalReplies;
-    g_replyCache[m_commentID].cached[this->m_page].replies = replies;
-    g_replyCache[m_commentID].time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());*/
+    g_replyHistoryCache[m_accountID].message = message;
+    g_replyHistoryCache[m_accountID].max_pages = this->m_maxPages;
+    g_replyHistoryCache[m_accountID].total_replies = this->m_totalReplies;
+    g_replyHistoryCache[m_accountID].cached[this->m_page].replies = replies;
+    g_replyHistoryCache[m_accountID].time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
     float totalHeight = 0.f;
     m_scrollLayer->m_contentLayer->removeAllChildren();
     m_scrollLayer->m_contentLayer->setLayout(
@@ -243,9 +243,9 @@ void ReplyHistoryLayer::populate(std::vector<Reply> const& replies,std::string c
 }
 
 void ReplyHistoryLayer::loadReplies(bool force){
-    /*auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
-    auto cache = g_replyCache[this->m_commentID];
-    auto diff = now-g_replyCache[this->m_commentID].time;
+    auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
+    auto cache = g_replyHistoryCache[m_accountID];
+    auto diff = now-g_replyHistoryCache[m_accountID].time;
     if (cache.cached.count(this->m_page)&&diff<std::chrono::seconds(300)&&!force){
         if (now-cache.cached[this->m_page].time<std::chrono::seconds(300)){
             this->m_maxPages = cache.max_pages;
@@ -255,7 +255,7 @@ void ReplyHistoryLayer::loadReplies(bool force){
         } else {
             geode::log::info("updating cache");
         }
-    }*/
+    }
 
     this->populate({});
     this->m_nextBtn->setVisible(false);
@@ -310,6 +310,6 @@ void ReplyHistoryLayer::loadReplies(bool force){
 }
 
 void ReplyHistoryLayer::onReload(CCObject* sender){
-    //g_replyCache[this->m_commentID].cached = {};
+    g_replyHistoryCache[m_accountID].cached = {};
     this->loadReplies(true);
 }

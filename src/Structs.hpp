@@ -308,6 +308,7 @@ struct ReplyCache {
 };
 
 static std::map<std::string,ReplyCache> g_replyCache = {};
+static std::map<int,ReplyCache> g_replyHistoryCache = {};
 static std::vector<std::string> g_votedOn = {};
 #define VECTOR_HAS_ITEM(vec, item) std::find(vec.begin(), vec.end(), item) != vec.end()
 
