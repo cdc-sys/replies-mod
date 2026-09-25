@@ -112,10 +112,13 @@ class $modify(MyProfilePage,ProfilePage) {
 
 		this->getChildByIDRecursive("left-menu")->addChild(myFuckassButton);
 		if (ownProfile && g_permissions >= ModerationPermissions::Moderator) this->getChildByIDRecursive("left-menu")->addChild(myFuckassModButton);
-		if (ownProfile) this->getChildByIDRecursive("left-menu")->addChild(this->m_fields->m_notifButton);
+		if (ownProfile && !Mod::get()->getSavedValue<std::string>("token").empty()) {
+			this->getChildByIDRecursive("left-menu")->addChild(this->m_fields->m_notifButton);
+			this->loadNotifCount();
+		}
 		this->getChildByIDRecursive("left-menu")->updateLayout();
 
-		this->loadNotifCount();
+		
 
 		return true;
 	}
