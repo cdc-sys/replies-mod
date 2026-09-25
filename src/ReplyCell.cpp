@@ -36,8 +36,13 @@ void ReplyCell::doDelete(){
                 notif->show();
             }
         } else {
-            m_rl->m_page = std::ceil((m_rl->m_totalReplies-2)/10)+1;
-            m_rl->loadReplies(true);
+            if (m_rl) {
+                m_rl->m_page = std::ceil((m_rl->m_totalReplies-2)/10)+1;
+                m_rl->loadReplies(true);
+            } else {
+                auto notif = geode::Notification::create("Reply deleted.",NotificationIcon::Success);
+                notif->show();
+            }
         }
     });
 }
@@ -311,11 +316,8 @@ bool ReplyCell::init(bool fromFetch){
     likeLabel = CCLabelBMFont::create("0","bigFont.fnt");
     likeMenu->addChild(likeLabel);
     likeMenu->addChild(likeBtn);
-    if ((g_permissions >= ModerationPermissions::Moderator || m_reply.author_id == GJAccountManager::get()->m_accountID) && !m_reply.from_comment){
-        auto deleteSpr = CCSprite::createWithSpriteFrameName("GJ_deleteIcon_001.png");
-        auto deleteBtn = CCMenuItemSpriteExtra::create(deleteSpr,this,menu_selector(ReplyCell::onDelete));
-        likeMenu->addChild(deleteBtn);
-    } else {
+
+    if (m_reply.author_id != GJAccountManager::get()->m_accountID && !m_reply.from_comment) {
         auto reportSpr = CCSprite::createWithSpriteFrameName("reportBtn.png"_spr);
         auto reportBtn = CCMenuItemExt::createSpriteExtra(reportSpr, [this](auto){
             auto reportLayer = ReplyReportLayer::create(this->m_reply);
@@ -323,6 +325,13 @@ bool ReplyCell::init(bool fromFetch){
         });
         likeMenu->addChild(reportBtn);
     }
+
+    if ((g_permissions >= ModerationPermissions::Moderator || m_reply.author_id == GJAccountManager::get()->m_accountID) && !m_reply.from_comment){
+        auto deleteSpr = CCSprite::createWithSpriteFrameName("GJ_deleteIcon_001.png");
+        auto deleteBtn = CCMenuItemSpriteExtra::create(deleteSpr,this,menu_selector(ReplyCell::onDelete));
+        likeMenu->addChild(deleteBtn);
+    }
+
     if (!m_reply.from_comment && this->m_bgColor != Highlighted) likeMenu->addChild(replyBtn);
 
     if (!m_reply.comment_id.empty()) {

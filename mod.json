@@ -8,7 +8,7 @@
 	},
 	"id": "cdc.replies",
 	"name": "Replies",
-	"version": "v1.0.4",
+	"version": "v1.1.0",
 	"developer": "cdc",
 	"description": "A mod that adds replying to comments.",
 	"resources": {
@@ -21,6 +21,10 @@
 			]
 		}
 	},
+	"links": {
+        "community": "https://discord.gg/GuagJDsqds",
+        "source": "https://github.com/cdc-sys/replies-mod"
+    },
 	"settings": {
 		"coloured-branches": {
             "name": "Coloured branches",
@@ -28,5 +32,8 @@
             "type": "bool",
             "default": false
         }
-	}
+	},
+	"dependencies": {
+        "geode.node-ids": ">=1.7.1"
+    }
 }

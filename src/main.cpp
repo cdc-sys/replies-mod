@@ -2,6 +2,8 @@
 #include <Geode/Geode.hpp>
 #include "ReplyLayer.hpp"
 #include "ReplyHistoryLayer.hpp"
+#include "ReplyReportListLayer.hpp"
+#include "ReplyNotificationListLayer.hpp"
 
 using namespace geode::prelude;
 
@@ -54,16 +56,66 @@ class $modify(MyCommentCell, CommentCell) {
 };
 
 class $modify(MyProfilePage,ProfilePage) {
+	struct Fields {
+		TaskHolder<web::WebResponse> m_webListener;
+		CCMenuItemSpriteExtra* m_notifButton;
+	};
+
+	void loadNotifCount(){
+		auto req = web::WebRequest();
+        req.header("Authorization", Mod::get()->getSavedValue<std::string>("token"));
+        req.header("mod-version",MOD_VERSION_HEADER);
+        auto url = fmt::format("{}/notification/count",SERVER_URL);
+        this->m_fields->m_webListener.spawn(req.get(url),[this](web::WebResponse res){
+			if (res.ok()) {
+				auto json = res.json().unwrapOrDefault();
+				auto count = geode::utils::numFromString<int>(json["count"].asString().unwrapOr("0")).unwrapOr(0);
+				if (count > 0) {
+					auto node = CCNode::create();
+					auto circle = CCSprite::create("circle.png");
+					circle->setScale(1.5f);
+					circle->setColor({255,0,0});
+					auto text = fmt::format("{}",count);
+					if (count > 9) text = "9+";
+					auto label = CCLabelBMFont::create(text.c_str(),"bigFont.fnt");
+					label->setScale(0.3f);
+					node->addChild(circle);
+					node->addChild(label);
+					node->setZOrder(999);
+					node->setPosition(this->m_fields->m_notifButton->getContentSize()*0.8f);
+					this->m_fields->m_notifButton->addChild(node);
+				}
+			}
+		});
+	}
+
 	bool init(int accountID, bool ownProfile) {
 		if (!ProfilePage::init(accountID, ownProfile)) return false;
 		
 		auto myFuckassButtonSpr = CCSprite::createWithSpriteFrameName("GJ_undoBtn_001.png");
+		myFuckassButtonSpr->setScale(30.f/myFuckassButtonSpr->getContentWidth());
 		auto myFuckassButton = CCMenuItemExt::createSpriteExtra(myFuckassButtonSpr, [accountID](auto){
 			ReplyHistoryLayer::create(accountID)->show();
 		});
 
+		auto myFuckassModButtonSpr = CCSprite::createWithSpriteFrameName("GJ_reportBtn_001.png");
+		myFuckassModButtonSpr->setScale(30.f/myFuckassModButtonSpr->getContentWidth());
+		auto myFuckassModButton = CCMenuItemExt::createSpriteExtra(myFuckassModButtonSpr, [accountID](auto){
+			ReplyReportListLayer::create()->show();
+		});
+
+		auto myFuckassNotificationButtonSpr = CCSprite::createWithSpriteFrameName("GJ_starBtn_001.png");
+		myFuckassNotificationButtonSpr->setScale(30.f/myFuckassNotificationButtonSpr->getContentWidth());
+		this->m_fields->m_notifButton = CCMenuItemExt::createSpriteExtra(myFuckassNotificationButtonSpr, [accountID](auto){
+			ReplyNotificationListLayer::create()->show();
+		});
+
 		this->getChildByIDRecursive("left-menu")->addChild(myFuckassButton);
+		if (ownProfile && g_permissions >= ModerationPermissions::Moderator) this->getChildByIDRecursive("left-menu")->addChild(myFuckassModButton);
+		if (ownProfile) this->getChildByIDRecursive("left-menu")->addChild(this->m_fields->m_notifButton);
 		this->getChildByIDRecursive("left-menu")->updateLayout();
+
+		this->loadNotifCount();
 
 		return true;
 	}

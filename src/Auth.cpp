@@ -8,10 +8,15 @@
 void Auth::handleError(web::WebResponse res){
     auto json = res.json().unwrapOrDefault();
     if (json.contains("err")){
-        auto errorText = json["err"]["text"].asString().unwrapOr("Unknown");
-        auto alert = FLAlertLayer::create("Uh Oh!",fmt::format("<cr>Auth failed: {}</c>",errorText).c_str(),"OK");
-        alert->show();
-        m_loading->fadeOut();
+        if (json["err"]["code"].asInt().unwrapOr(0) != 4) {
+            auto errorText = json["err"]["text"].asString().unwrapOr("Unknown");
+            auto alert = FLAlertLayer::create("Uh Oh!",fmt::format("<cr>Auth failed: {}</c>",errorText).c_str(),"OK");
+            alert->show();
+            m_loading->fadeOut();
+        } else {
+            openPunishmentModal(res);
+            m_loading->fadeOut();
+        }
     } else {
         auto alert = FLAlertLayer::create("Uh Oh!",fmt::format("<cr>Auth failed: {}</c>",res.string().unwrapOr("Unknown")).c_str(),"OK");
         alert->show();

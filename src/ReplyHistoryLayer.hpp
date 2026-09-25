@@ -37,7 +37,7 @@ class ReplyHistoryLayer : public RepliesBasePaginatedLayer {
     bool _m_darker;
 
     void show() override; 
-    void loadReplies(bool force);
+    void loadReplies(bool force) override;
 
     static ReplyHistoryLayer* create(int accountID);
 };

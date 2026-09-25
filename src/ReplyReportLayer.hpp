@@ -100,6 +100,7 @@ protected:
             if (i == m_reportOptions.size()-1) {
                 this->m_otherInput = geode::TextInput::create(200.f,"Type a reason here..","chatFont.fnt");
                 this->m_otherInput->setTextAlign(TextInputAlign::Left);
+                this->m_otherInput->setMaxCharCount(20);
                 optionContainer->addChild(this->m_otherInput);
             }
 
@@ -131,6 +132,7 @@ protected:
 
         this->m_additionalNoteInput = TextInput::create(250.f, "Enter the additional note here.. (Optional)","chatFont.fnt");
         this->m_additionalNoteInput->setPosition({this->m_mainLayer->getContentWidth()/2,this->m_mainLayer->getContentWidth()/5.f});
+        this->m_additionalNoteInput->setMaxCharCount(200);
 
         auto button = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Report"), [this](auto){
             this->doReport();

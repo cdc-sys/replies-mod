@@ -1,10 +1,9 @@
-#include "ReplyReportListLayer.hpp"
-#include "ReportCell.hpp"
+#include "ReplyNotificationListLayer.hpp"
+#include "NotificationCell.hpp"
 #include "ReplyPunishUserLayer.hpp"
-#include "ReplySendNoticeLayer.hpp"
 
-ReplyReportListLayer* ReplyReportListLayer::create() {
-    auto ret = new ReplyReportListLayer();
+ReplyNotificationListLayer* ReplyNotificationListLayer::create() {
+    auto ret = new ReplyNotificationListLayer();
     if (ret && ret->init()) {
         ret->autorelease();
         return ret;
@@ -13,7 +12,7 @@ ReplyReportListLayer* ReplyReportListLayer::create() {
     return nullptr;
 }
 
-void ReplyReportListLayer::show(){
+void ReplyNotificationListLayer::show(){
     auto winSize = CCDirector::sharedDirector()->getWinSize();
     CCScene::get()->addChild(this);
     this->setZOrder(CCScene::get()->getHighestChildZ()+1);
@@ -25,10 +24,10 @@ void ReplyReportListLayer::show(){
     this->runAction(CCFadeTo::create(0.25f,125));
 }
 
-bool ReplyReportListLayer::init(){
-    if (!Popup::init(380,300)) return false; 
+bool ReplyNotificationListLayer::init(){
+    if (!Popup::init(375,300)) return false; 
 
-    this->setTitle("Active Reports");
+    this->setTitle("Notifications");
 
     auto winSize = CCDirector::sharedDirector()->getWinSize();
 
@@ -39,61 +38,21 @@ bool ReplyReportListLayer::init(){
     
 
     m_scrollLayer = geode::ScrollLayer::create({335.f,248.f});
-    m_scrollLayer->setPosition({37.f,16.f});
+    m_scrollLayer->setPosition({20.f,16.f});
     this->m_mainLayer->addChild(m_scrollLayer);
     
     auto border = CCScale9Sprite::create("geode.loader/inverseborder.png");
     border->setContentSize(m_scrollLayer->getContentSize());
     border->ignoreAnchorPointForPosition(true);
-    border->setPosition({37.f,16.f});
+    border->setPosition({20.f,16.f});
     border->setAnchorPoint({0,0});
     this->m_mainLayer->addChild(border);
 
     auto reloadSpr = CCSprite::createWithSpriteFrameName("GJ_updateBtn_001.png");
-    reloadBtn = CCMenuItemSpriteExtra::create(reloadSpr,this,menu_selector(ReplyReportListLayer::onReload));
+    reloadBtn = CCMenuItemSpriteExtra::create(reloadSpr,this,menu_selector(ReplyNotificationListLayer::onReload));
     reloadBtn->setPosition({20.f,280.f});
     reloadSpr->setScale(0.5f);
     this->m_buttonMenu->addChild(reloadBtn);
-
-    auto sortModeMenu = CCMenu::create();
-    std::vector<std::pair<std::string,std::string>> sortingModes = {{"notice","GJ_infoIcon_001.png"},{"mute","GJ_fxOffBtn_001.png"},{"ban","GJ_deleteIcon_001.png"},{"set_role","GJ_diamondsIcon_001.png"}};
-    for (auto sort : sortingModes) {
-        if (g_permissions < ModerationPermissions::Administrator && sort.first == "ban") continue;
-        if (sort.first == "set_role") continue;
-
-        auto sprite = CCSprite::create("GJ_button_01.png");
-        sprite->setScale(0.5f);
-
-        auto toggler = CCMenuItemExt::createSpriteExtra(sprite, [this,sort](CCMenuItemSpriteExtra* me) {
-            if (sort.first == "notice") {
-                ReplySendNoticeLayer::create()->show();
-            } else {
-                auto rpul = ReplyPunishUserLayer::create(sort.first);
-                rpul->show();
-            }
-        });
-
-        auto sortIcon = CCSprite::createWithSpriteFrameName(sort.second.c_str());
-        sortIcon->setScale(12/sortIcon->getContentWidth());
-        sortIcon->setPosition({toggler->getContentWidth()/2,toggler->getContentHeight()/2});
-        sortIcon->setZOrder(999);
-        if (sort.first == "dislikes") sortIcon->setContentHeight(24.f); // robtop why the fuckkk is your texture fucked up like this
-        toggler->addChild(sortIcon);
-
-        sortModeMenu->addChild(toggler);
-    }
-
-    auto layout = AxisLayout::create(Axis::Column);
-    layout->setAutoGrowAxis(1.f);
-    layout->setGap(3.f);
-    layout->setAxisReverse(true);
-    sortModeMenu->setLayout(layout);
-    sortModeMenu->updateLayout();
-
-    sortModeMenu->setPosition({20.f,260.f});
-    sortModeMenu->setAnchorPoint({0.5,1});
-
-    this->m_mainLayer->addChild(sortModeMenu);
 
     auto prevSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
     auto nextSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
@@ -107,7 +66,7 @@ bool ReplyReportListLayer::init(){
         this->loadReplies(false);
     });
     this->m_prevBtn->setPosition({-20.f,winSize.height/2.5f});
-    this->m_nextBtn->setPosition({400.f,winSize.height/2.5f});
+    this->m_nextBtn->setPosition({395.f,winSize.height/2.5f});
     this->m_buttonMenu->addChild(m_prevBtn);
     this->m_buttonMenu->addChild(m_nextBtn);
 
@@ -124,7 +83,7 @@ bool ReplyReportListLayer::init(){
     return true;
 }
 
-void ReplyReportListLayer::populate(std::vector<Report> const& reports,std::string const& message){
+void ReplyNotificationListLayer::populate(std::vector<RepliesNotification> const& notifs,std::string const& message){
     if (m_page==1) m_prevBtn->setVisible(false);
     else m_prevBtn->setVisible(true);
     if (m_page==m_maxPages) m_nextBtn->setVisible(false);
@@ -142,8 +101,8 @@ void ReplyReportListLayer::populate(std::vector<Report> const& reports,std::stri
     );
 
     this->_m_darker = true;
-    for (auto report : reports) {
-        auto replyCell = ReportCell::create(this,report,(_m_darker ? ReplyBackgroundColor::Darker : ReplyBackgroundColor::Regular));
+    for (auto notif : notifs) {
+        auto replyCell = NotificationCell::create(this,notif,(_m_darker ? ReplyBackgroundColor::Darker : ReplyBackgroundColor::Regular));
         totalHeight += replyCell->getContentHeight();
         m_scrollLayer->m_contentLayer->addChild(replyCell);
         this->_m_darker = !this->_m_darker;
@@ -169,7 +128,7 @@ void ReplyReportListLayer::populate(std::vector<Report> const& reports,std::stri
     pageLabel->setString(fmt::format("Page {}/{} (Total: {})",this->m_page,this->m_maxPages,geode::utils::numToAbbreviatedString(this->m_totalReplies)).c_str());
 }
 
-void ReplyReportListLayer::loadReplies(bool force){
+void ReplyNotificationListLayer::loadReplies(bool force){
     this->populate({});
     this->m_nextBtn->setVisible(false);
     this->reloadBtn->setEnabled(false);
@@ -192,22 +151,22 @@ void ReplyReportListLayer::loadReplies(bool force){
 
     req.header("mod-version",MOD_VERSION_HEADER);
     req.header("Authorization",Mod::get()->getSavedValue<std::string>("token"));
-    auto url = fmt::format("{}/moderation/reports/{}",SERVER_URL,this->m_page);
+    auto url = fmt::format("{}/notifications/{}",SERVER_URL,this->m_page);
     geode::log::info("{}",url);
     m_webListener.spawn(req.get(url),[this,loadingSpinner](web::WebResponse res){
         loadingSpinner->removeFromParent();
         if (res.ok()){
             auto json = res.json().unwrapOrDefault();
-            if (json.contains("reports")){
+            if (json.contains("notifications")){
                 this->m_maxPages = json["total_pages"].asInt().unwrapOr(1);
                 this->m_totalReplies = json["total"].asInt().unwrapOr(0);
-                auto reports = json["reports"].asArray().unwrap();
-                auto processedReports = std::vector<Report>();
-                for (auto _report : reports){
-                    auto report = _report.as<Report>();
-                    processedReports.push_back(report.unwrap());
+                auto notifs = json["notifications"].asArray().unwrap();
+                auto processedNotifs = std::vector<RepliesNotification>();
+                for (auto _notif : notifs){
+                    auto notif = _notif.as<RepliesNotification>();
+                    processedNotifs.push_back(notif.unwrap());
                 }
-                this->populate(processedReports);
+                this->populate(processedNotifs);
             }
         } else {
             auto json = res.json().unwrapOrDefault();
@@ -215,13 +174,13 @@ void ReplyReportListLayer::loadReplies(bool force){
                 auto error = json["err"]["text"].asString().unwrapOr("");
                 this->populate({},error);
             } else {
-                geode::log::error("Failed to load reports: {}",res.string().unwrapOr("Unknown"));
+                geode::log::error("Failed to load notifications: {}",res.string().unwrapOr("Unknown"));
                 this->populate({},"Something went wrong.");
             }
         }
     });
 }
 
-void ReplyReportListLayer::onReload(CCObject* sender){
+void ReplyNotificationListLayer::onReload(CCObject* sender){
     this->loadReplies(true);
 }

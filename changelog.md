@@ -1,3 +1,8 @@
+# 1.1.0
+- Add reporting system.
+- Add reply history.
+- Add notification system.
+
 # 1.0.4
 - Implemented sorting modes in ReplyLayer.
 

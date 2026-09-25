@@ -319,6 +319,7 @@ void ReplyLayer::onUpload(CCObject* sender){
         req.header("mod-version",MOD_VERSION_HEADER);
         auto url = fmt::format("{}/replies/{}",SERVER_URL,m_commentID);
         req.param("c",m_replyTextInput->getString());
+        if (m_comment) req.param("a",m_comment->m_userName); 
         m_webListener.spawn(req.post(url),[this](web::WebResponse res){
             m_uploadBtn->setEnabled(true);
             if (res.ok()){
@@ -332,7 +333,12 @@ void ReplyLayer::onUpload(CCObject* sender){
                     auto error = json["err"]["text"].asString().unwrapOr("Unknown");
                     auto notif = geode::Notification::create(fmt::format("Failed to post: {}",error),NotificationIcon::Error);
                     notif->show();
-                    onUploadFailed(json["err"]["code"].asInt().unwrapOrDefault());
+                    auto code = json["err"]["code"].asInt().unwrapOrDefault();
+                    if (code == 4){
+                        openPunishmentModal(res);
+                    } else {
+                        onUploadFailed(json["err"]["code"].asInt().unwrapOrDefault());
+                    }
                 } else {
                     geode::log::error("Failed to load replies: {}",res.string().unwrapOr("Unknown"));
                     onUploadFailed(0);

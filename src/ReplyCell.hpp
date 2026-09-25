@@ -8,12 +8,6 @@
 
 using namespace geode::prelude;
 
-enum ReplyBackgroundColor {
-    Highlighted,
-    Darker,
-    Regular
-};
-
 enum ReplySpriteType {
     Line,
     Curl,

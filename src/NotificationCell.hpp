@@ -7,13 +7,12 @@
 
 using namespace geode::prelude;
 
-class ReportCell : public CCNode {
+class NotificationCell : public CCNode {
     ReplyBackgroundColor m_bgColor;
     RepliesBasePaginatedLayer* m_rl;
     TaskHolder<web::WebResponse> m_webListener;
     bool init(); 
     public:
-    Report m_report;
-    void doClose(bool accepted);
-    static ReportCell* create(RepliesBasePaginatedLayer* rl,Report report,ReplyBackgroundColor bgColor=ReplyBackgroundColor::Regular);
+    RepliesNotification m_notif;
+    static NotificationCell* create(RepliesBasePaginatedLayer* rl,RepliesNotification notif,ReplyBackgroundColor bgColor=ReplyBackgroundColor::Regular);
 };

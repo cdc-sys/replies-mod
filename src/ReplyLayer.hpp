@@ -40,7 +40,7 @@ class ReplyLayer : public RepliesBasePaginatedLayer {
     bool _m_darker;
 
     void show() override; 
-    void loadReplies(bool force);
+    void loadReplies(bool force) override;
     void addReplyUI();
     void onClose(CCObject*sender) override;
 

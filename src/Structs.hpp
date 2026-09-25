@@ -38,6 +38,46 @@ struct Reply {
     Reply* parent=nullptr;
 };
 
+struct Report {
+    std::string id;
+    std::string reason;
+    std::string note;
+    int64_t author_id;
+    std::string author_name;
+    int64_t account_id;
+    std::string account_name;
+    std::string reply_id;
+    int64_t timestamp;
+};
+
+enum class RepliesNotificationIcon {
+    Info = 0,
+    Check = 1,
+    Cross = 2
+};
+
+enum class RepliesNotificationType {
+    Regular = 0,
+    Reply = 1,
+    Punishment = 2
+};
+
+struct RepliesNotification {
+    std::string id;
+    int64_t account_id;
+    int64_t timestamp;
+    RepliesNotificationType type;
+    RepliesNotificationIcon icon_type;
+    std::string title;
+    std::string description;
+    std::string punishment_type;
+    int64_t punishment_expiry;
+    int64_t reply_author;
+    std::string reply_id;
+    bool read;
+    IconData icon;
+};
+
 template <>
 struct matjson::Serialize<IconData>
 {
@@ -101,6 +141,80 @@ struct matjson::Serialize<Reply>
     }
 };
 
+template <>
+struct matjson::Serialize<Report>
+{
+    static Result<Report> fromJson(matjson::Value const &value)
+    {
+        Report report = Report();
+        report.id = value["id"].asString().unwrapOr("0");
+        report.reason = value["reason"].asString().unwrapOr("No reason provided.");
+        report.note = value["note"].asString().unwrapOr("No note provided.");
+        report.author_id = geode::utils::numFromString<int64_t>(value["author_id"].asString().unwrapOr("0")).unwrapOr(0);
+        report.author_name = value["author_name"].asString().unwrapOr("Unknown");
+        report.account_id = geode::utils::numFromString<int64_t>(value["account_id"].asString().unwrapOr("0")).unwrapOr(0);
+        report.account_name = value["account_name"].asString().unwrapOr("Unknown");
+        report.reply_id = value["reply_id"].asString().unwrapOr("null");
+        report.timestamp = geode::utils::numFromString<int64_t>(value["timestamp"].asString().unwrapOr("0")).unwrapOr(0);
+        return Ok(report);
+    }
+    static matjson::Value toJson(Report const &value){
+        auto obj = matjson::Value();
+        obj["id"] = value.id;
+        obj["reason"] = value.reason;
+        obj["note"] = value.note;
+        obj["author_id"] = value.author_id;
+        obj["author_name"] = value.author_name;
+        obj["account_id"] = value.account_id;
+        obj["account_name"] = value.account_name;
+        obj["reply_id"] = value.reply_id;
+        obj["timestamp"] = value.timestamp;
+        return obj;
+    }
+};
+
+template <>
+struct matjson::Serialize<RepliesNotification>
+{
+    static Result<RepliesNotification> fromJson(matjson::Value const &value)
+    {
+        RepliesNotification notification = RepliesNotification();
+        notification.id = value["id"].asString().unwrapOr("0");
+        notification.account_id = geode::utils::numFromString<int64_t>(value["account_id"].asString().unwrapOr("0")).unwrapOr(0);
+        notification.timestamp = geode::utils::numFromString<int64_t>(value["timestamp"].asString().unwrapOr("0")).unwrapOr(0);
+        notification.type = (RepliesNotificationType)value["type"].asInt().unwrapOr(0);
+        notification.icon_type = (RepliesNotificationIcon)value["icon_type"].asInt().unwrapOr(0);
+        notification.title = value["title"].asString().unwrapOr("");
+        notification.description = value["description"].asString().unwrapOr("");
+        notification.punishment_type = value["punishment_type"].asString().unwrapOr("");
+        notification.punishment_expiry = geode::utils::numFromString<int64_t>(value["punishment_expiry"].asString().unwrapOr("0")).unwrapOr(0);
+        notification.reply_author = geode::utils::numFromString<int64_t>(value["reply_author"].asString().unwrapOr("0")).unwrapOr(0);
+        notification.reply_id = value["reply_id"].asString().unwrapOr("0");
+        notification.read = value["read"].asBool().unwrapOr(false);
+        if (value.contains("icon")){
+            notification.icon = value["icon"].as<IconData>().unwrapOrDefault();
+        }
+        return Ok(notification);
+    }
+    static matjson::Value toJson(RepliesNotification const &value){
+        auto obj = matjson::Value();
+        obj["id"] = value.id;
+        obj["account_id"] = value.account_id;
+        obj["timestamp"] = value.timestamp;
+        obj["type"] = (int)value.type;
+        obj["icon_type"] = (int)value.icon_type;
+        obj["title"] = value.title;
+        obj["description"] = value.description;
+        obj["punishment_type"] = value.punishment_type;
+        obj["punishment_expiry"] = value.punishment_expiry;
+        obj["reply_author"] = value.reply_author;
+        obj["reply_id"] = value.reply_id;
+        obj["read"] = value.read;
+        return obj;
+    }
+};
+
+
 inline Reply replyFromComment(GJComment* comment,int replies=0){
     Reply reply = Reply();
     reply.from_comment = true;
@@ -128,48 +242,53 @@ inline Reply replyFromComment(GJComment* comment,int replies=0){
     return reply;
 }
 
-inline std::string toAgoString(int timestamp) {
-    auto const fmtPlural = [](auto count, auto unit) {
+inline std::string toAgoString(int64_t timestamp) {
+    auto const fmtPlural = [](auto count, auto unit, bool future) {
         if (count == 1) {
+            if (future) return fmt::format("in {} {}", count, unit);
             return fmt::format("{} {} ago", count, unit);
         }
+        if (future) return fmt::format("in {} {}s", count, unit);
         return fmt::format("{} {}s ago", count, unit);
     };
     auto value = std::chrono::seconds(timestamp);
     auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
-    auto len = std::chrono::duration_cast<std::chrono::seconds>(now - value).count();
+    bool future = value > now;
+    geode::log::info("timestamp: {}, now: {}, value: {}, future: {}", timestamp, now.count(), value.count(), future);
+    auto len = abs(std::chrono::duration_cast<std::chrono::seconds>(now - value).count());
     if (len <= 0){
         return fmt::format("0 seconds ago");
     }
     if (len < 60) {
-        return fmtPlural(len, "second");
+        return fmtPlural(len, "second", future);
     }
-    len = std::chrono::duration_cast<std::chrono::minutes>(now - value).count();
+    len = abs(std::chrono::duration_cast<std::chrono::minutes>(now - value).count());
     if (len < 60) {
-        return fmtPlural(len, "minute");
+        return fmtPlural(len, "minute", future);
     }
-    len = std::chrono::duration_cast<std::chrono::hours>(now - value).count();
+    len = abs(std::chrono::duration_cast<std::chrono::hours>(now - value).count());
     if (len < 24) {
-        return fmtPlural(len, "hour");
+        return fmtPlural(len, "hour", future);
     }
-    len = std::chrono::duration_cast<std::chrono::days>(now - value).count();
+    len = abs(std::chrono::duration_cast<std::chrono::days>(now - value).count());
     if (len < 31) {
-        return fmtPlural(len, "day");
+        return fmtPlural(len, "day", future);
     }
-    len = std::chrono::duration_cast<std::chrono::weeks>(now - value).count();
+    len = abs(std::chrono::duration_cast<std::chrono::weeks>(now - value).count());
     if (len < 4) {
-        return fmtPlural(len, "week");
+        return fmtPlural(len, "week", future);
     }
-    len = std::chrono::duration_cast<std::chrono::months>(now - value).count();
+    len = abs(std::chrono::duration_cast<std::chrono::months>(now - value).count());
     if (len < 12) {
-        return fmtPlural(len, "month");
+        return fmtPlural(len, "month", future);
     }
-    len = std::chrono::duration_cast<std::chrono::years>(now - value).count();
+    len = abs(std::chrono::duration_cast<std::chrono::years>(now - value).count());
     if (len >= 1) {
-        return fmtPlural(len, "year");
+        return fmtPlural(len, "year", future);
     }
     return fmt::format("this is the secret string");
 }
+
 // https://replies.cdc-sys.com
 static constexpr const std::string_view SERVER_URL = "http://localhost:6650";
 static const std::string MOD_VERSION_HEADER = Mod::get()->getVersion().toVString();
@@ -205,13 +324,42 @@ enum class Mode {
     LargeCells,
     CompactCells
 };
+
+enum ReplyBackgroundColor {
+    Highlighted,
+    Darker,
+    Regular
+};
+
 class RepliesBasePaginatedLayer : public geode::Popup {
     public:
-    void loadReplies(bool force) {};
+    virtual void loadReplies(bool force) {};
     Mode m_displayMode=Mode::CompactCells;
     int m_page=1;
     int m_maxPages=1;
     int m_totalReplies=0;
 };
+
+static void openPunishmentModal(web::WebResponse res){
+    auto json = res.json().unwrapOrDefault();
+    if (json.contains("err")){
+        auto err = json["err"];
+        if (err.contains("code") && err["code"].asInt().unwrapOr(0)==4){
+            auto type = err["type"].asString().unwrapOr("Unknown");
+            auto expiration = geode::utils::numFromString<int64_t>(err["expiration"].asString().unwrapOr("-1")).unwrapOr(-1);
+            auto reason = err["reason"].asString().unwrapOr("No reason provided.");
+            std::string expirationStr;
+            if (expiration == -1){
+                expirationStr = fmt::format("Your <cj>{}</c> is <cr>permanent</c>.",type);
+            } else {
+                expirationStr = fmt::format("Your <cj>{}</c> expires <cg>{}</c>.",type,toAgoString(expiration));
+            }
+            
+            createQuickPopup("Access Restricted",fmt::format("Looks like you have broken the <co>Replies</c> rules!\nTherefore, your access to certain features has been restricted.\n{}\n<cy>Reason: {}</c>",expirationStr,reason),"OK",nullptr,[](auto,auto){
+
+            });
+        }
+    }
+}
 
 static ModerationPermissions g_permissions = (ModerationPermissions)Mod::get()->getSavedValue<int64_t>("moderation_permissions");

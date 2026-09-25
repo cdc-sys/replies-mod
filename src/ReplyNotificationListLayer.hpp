@@ -5,7 +5,7 @@
 
 using namespace geode::prelude;
 
-class ReplyReportListLayer : public RepliesBasePaginatedLayer {
+class ReplyNotificationListLayer : public RepliesBasePaginatedLayer {
     CCMenuItemSpriteExtra* m_uploadBtn;
     CCMenuItemSpriteExtra* m_prevBtn;
     CCMenuItemSpriteExtra* m_nextBtn;
@@ -15,7 +15,7 @@ class ReplyReportListLayer : public RepliesBasePaginatedLayer {
     TaskHolder<web::WebResponse> m_webListener;
 
     bool init();
-    void populate(std::vector<Report> const& replies,std::string const& message="");
+    void populate(std::vector<RepliesNotification> const& replies,std::string const& message="");
     void onReload(CCObject* sender);
 
     public:
@@ -30,5 +30,5 @@ class ReplyReportListLayer : public RepliesBasePaginatedLayer {
     void show() override; 
     void loadReplies(bool force) override;
 
-    static ReplyReportListLayer* create();
+    static ReplyNotificationListLayer* create();
 };
