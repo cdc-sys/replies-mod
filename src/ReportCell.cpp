@@ -163,7 +163,7 @@ bool ReportCell::init(){
 
     actionsMenu->addChild(sendNoticeBtn);
     actionsMenu->addChild(muteUserBtn);
-    if (g_permissions >= ModerationPermissions::Administrator) actionsMenu->addChild(banUserBtn);
+    if (RepliesManager::get().modPermissions >= ModerationPermissions::Administrator) actionsMenu->addChild(banUserBtn);
 
     layout = AxisLayout::create(Axis::Row);
     layout->setGap(10.f);

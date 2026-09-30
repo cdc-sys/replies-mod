@@ -58,7 +58,7 @@ bool ReplyReportListLayer::init(){
     auto sortModeMenu = CCMenu::create();
     std::vector<std::pair<std::string,std::string>> sortingModes = {{"notice","GJ_infoIcon_001.png"},{"mute","GJ_fxOffBtn_001.png"},{"ban","GJ_deleteIcon_001.png"},{"set_role","GJ_diamondsIcon_001.png"}};
     for (auto sort : sortingModes) {
-        if (g_permissions < ModerationPermissions::Administrator && sort.first == "ban") continue;
+        if (RepliesManager::get().modPermissions < ModerationPermissions::Administrator && sort.first == "ban") continue;
         if (sort.first == "set_role") continue;
 
         auto sprite = CCSprite::create("GJ_button_01.png");

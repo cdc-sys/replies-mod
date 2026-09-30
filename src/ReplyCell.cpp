@@ -15,7 +15,7 @@ void ReplyCell::onReply(CCObject* sender){
 }
 
 void ReplyCell::onVote(CCObject* sender){
-    if (VECTOR_HAS_ITEM(g_votedOn, this->m_reply.id)) return;
+    if (VECTOR_HAS_ITEM(RepliesManager::get().votedOn, this->m_reply.id)) return;
 
     if (m_reply.from_comment) return;
     auto likeLayer = ReplyVotingLayer::create(this->m_reply.id,this);
@@ -326,7 +326,7 @@ bool ReplyCell::init(bool fromFetch){
         likeMenu->addChild(reportBtn);
     }
 
-    if ((g_permissions >= ModerationPermissions::Moderator || m_reply.author_id == GJAccountManager::get()->m_accountID) && !m_reply.from_comment){
+    if ((RepliesManager::get().modPermissions >= ModerationPermissions::Moderator || m_reply.author_id == GJAccountManager::get()->m_accountID) && !m_reply.from_comment){
         auto deleteSpr = CCSprite::createWithSpriteFrameName("GJ_deleteIcon_001.png");
         auto deleteBtn = CCMenuItemSpriteExtra::create(deleteSpr,this,menu_selector(ReplyCell::onDelete));
         likeMenu->addChild(deleteBtn);

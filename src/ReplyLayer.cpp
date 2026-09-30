@@ -267,11 +267,11 @@ void ReplyLayer::populate(std::vector<Reply> const& replies,std::string const& m
     else m_nextBtn->setVisible(true);
     reloadBtn->setEnabled(true);
 
-    g_replyCache[m_commentID].message = message;
-    g_replyCache[m_commentID].max_pages = this->m_maxPages;
-    g_replyCache[m_commentID].total_replies = this->m_totalReplies;
-    g_replyCache[m_commentID].cached[this->m_page].replies = replies;
-    g_replyCache[m_commentID].time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
+    RepliesManager::get().replyCache[m_commentID].message = message;
+    RepliesManager::get().replyCache[m_commentID].max_pages = this->m_maxPages;
+    RepliesManager::get().replyCache[m_commentID].total_replies = this->m_totalReplies;
+    RepliesManager::get().replyCache[m_commentID].cached[this->m_page].replies = replies;
+    RepliesManager::get().replyCache[m_commentID].time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
     float totalHeight = 0.f;
     m_scrollLayer->m_contentLayer->removeAllChildren();
     m_scrollLayer->m_contentLayer->setLayout(
@@ -350,8 +350,8 @@ void ReplyLayer::onUpload(CCObject* sender){
 
 void ReplyLayer::loadReplies(bool force){
     auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
-    auto cache = g_replyCache[this->m_commentID];
-    auto diff = now-g_replyCache[this->m_commentID].time;
+    auto cache = RepliesManager::get().replyCache[this->m_commentID];
+    auto diff = now-RepliesManager::get().replyCache[this->m_commentID].time;
     if (cache.cached.count(this->m_page)&&diff<std::chrono::seconds(300)&&!force){
         if (now-cache.cached[this->m_page].time<std::chrono::seconds(300)){
             this->m_maxPages = cache.max_pages;
@@ -427,6 +427,6 @@ void ReplyLayer::onUploadFailed(int code){
     }
 }
 void ReplyLayer::onReload(CCObject* sender){
-    g_replyCache[this->m_commentID].cached = {};
+    RepliesManager::get().replyCache[this->m_commentID].cached = {};
     this->loadReplies(true);
 }

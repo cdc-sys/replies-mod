@@ -306,12 +306,7 @@ struct ReplyCache {
     std::chrono::seconds time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
 };
 
-static std::map<std::string,ReplyCache> g_replyCache = {};
-static std::map<int,ReplyCache> g_replyHistoryCache = {};
-static std::vector<std::string> g_votedOn = {};
 #define VECTOR_HAS_ITEM(vec, item) std::find(vec.begin(), vec.end(), item) != vec.end()
-
-static bool g_syncedIcons = false;
 
 enum class ModerationPermissions {
     None = 0,
@@ -362,4 +357,17 @@ static void openPunishmentModal(web::WebResponse res){
     }
 }
 
-static ModerationPermissions g_permissions = (ModerationPermissions)Mod::get()->getSavedValue<int64_t>("moderation_permissions");
+//static ModerationPermissions RepliesManager::get().permissions = (ModerationPermissions)Mod::get()->getSavedValue<int64_t>("moderation_permissions");
+
+class RepliesManager {
+    public:
+    ModerationPermissions modPermissions;
+    std::map<std::string,ReplyCache> replyCache = {};
+    std::map<int,ReplyCache> replyHistoryCache = {};
+    std::vector<std::string> votedOn = {};
+    bool hasSyncedIcons;
+    static RepliesManager& get(){
+        static RepliesManager mgr;
+        return mgr;
+    }
+};

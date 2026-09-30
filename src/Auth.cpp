@@ -148,10 +148,10 @@ class $modify(MyMenuLayer,MenuLayer){
     bool init(){
         if (!MenuLayer::init()) return false;
 
-        if (g_syncedIcons) return true;
+        if (RepliesManager::get().hasSyncedIcons) return true;
         if (Mod::get()->getSavedValue<std::string>("token").empty()) return true;
 
-        g_syncedIcons = true;
+        RepliesManager::get().hasSyncedIcons = true;
         auto req = web::WebRequest();
         req.header("Authorization",Mod::get()->getSavedValue<std::string>("token"));
         req.header("mod-version",MOD_VERSION_HEADER);
@@ -169,9 +169,8 @@ class $modify(MyMenuLayer,MenuLayer){
                 auth->send_icons();
                 auto json = res.json().unwrapOrDefault();
                 auto modPerms = json["mod_permission_level"].asInt().unwrapOr(0);
-                g_permissions = (ModerationPermissions)modPerms;
+                RepliesManager::get().modPermissions = (ModerationPermissions)modPerms;
                 Mod::get()->setSavedValue<int64_t>("moderation_permissions", modPerms);
-                geode::log::info("mod perm level: {} ENUM: {}",modPerms,(int)g_permissions);
             }
         });
         return true;

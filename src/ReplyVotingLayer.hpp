@@ -31,7 +31,7 @@ protected:
                     notif->show();
                 }
             } else {
-                g_votedOn.push_back(this->id);
+                RepliesManager::get().votedOn.push_back(this->id);
             }
             this->release();
         });
