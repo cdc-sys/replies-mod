@@ -71,6 +71,7 @@ struct RepliesNotification {
     std::string title;
     std::string description;
     std::string punishment_type;
+    std::string punishment_reason;
     int64_t punishment_expiry;
     int64_t reply_author;
     std::string reply_id;
@@ -122,6 +123,7 @@ struct matjson::Serialize<Reply>
             reply.icon = value["icon"].as<IconData>().unwrapOrDefault();
         }
         reply.replies = value["replies"].as<std::vector<Reply>>().unwrapOrDefault();
+        reply.from_comment = value["from_comment"].asBool().unwrapOr(false);
         return Ok(reply);
     }
     static matjson::Value toJson(Reply const &value){
@@ -137,6 +139,7 @@ struct matjson::Serialize<Reply>
         if (value.icon.id != 0){
             obj["icon"] = matjson::Value(value.icon);
         }
+        obj["from_comment"] = value.from_comment;
         return obj;
     }
 };
@@ -187,6 +190,7 @@ struct matjson::Serialize<RepliesNotification>
         notification.title = value["title"].asString().unwrapOr("");
         notification.description = value["description"].asString().unwrapOr("");
         notification.punishment_type = value["punishment_type"].asString().unwrapOr("");
+        notification.punishment_reason = value["punishment_reason"].asString().unwrapOr("No reason provided.");
         notification.punishment_expiry = geode::utils::numFromString<int64_t>(value["punishment_expiry"].asString().unwrapOr("0")).unwrapOr(0);
         notification.reply_author = geode::utils::numFromString<int64_t>(value["reply_author"].asString().unwrapOr("0")).unwrapOr(0);
         notification.reply_id = value["reply_id"].asString().unwrapOr("0");
@@ -207,6 +211,7 @@ struct matjson::Serialize<RepliesNotification>
         obj["description"] = value.description;
         obj["punishment_type"] = value.punishment_type;
         obj["punishment_expiry"] = value.punishment_expiry;
+        obj["punishment_reason"] = value.punishment_reason;
         obj["reply_author"] = value.reply_author;
         obj["reply_id"] = value.reply_id;
         obj["read"] = value.read;
@@ -289,7 +294,7 @@ inline std::string toAgoString(int64_t timestamp) {
     return fmt::format("this is the secret string");
 }
 
-static constexpr const std::string_view SERVER_URL = "https://replies.cdc-sys.com";
+static const std::string SERVER_URL = Mod::get()->getSettingValue<std::string>("api-url");
 static const std::string MOD_VERSION_HEADER = Mod::get()->getVersion().toVString();
 
 struct CacheEntry {
@@ -350,8 +355,14 @@ static void openPunishmentModal(web::WebResponse res){
                 expirationStr = fmt::format("Your <cj>{}</c> expires <cg>{}</c>.",type,toAgoString(expiration));
             }
             
-            createQuickPopup("Access Restricted",fmt::format("Looks like you have broken the <co>Replies</c> rules!\nTherefore, your access to certain features has been restricted.\n{}\n<cy>Reason: {}</c>",expirationStr,reason),"OK",nullptr,[](auto,auto){
-
+            createQuickPopup("Access Restricted",fmt::format("Looks like you have broken the <co>Replies</c> rules!\nTherefore, your access to certain features has been restricted.\n{}\n<cy>Reason: {}</c>",expirationStr,reason),"Appeal","OK",[type](auto,bool btn2){
+                if (!btn2) {
+                    createQuickPopup("Appeal Instructions",fmt::format("In order to appeal your <cj>{}</c> you have to join the official <co>Replies</c> Discord server.\nThen, submit your appeal in a post in the <cy>#replies-support</c> channel.\nDo you want to do this?",type),"Nevermind","JOIN",[](auto,bool btn2){
+                        if (btn2) {
+                            CCApplication::get()->openURL(Mod::get()->getMetadata().getLinks().getCommunityURL()->c_str());
+                        }
+                    });
+                }
             });
         }
     }
@@ -361,7 +372,7 @@ static void openPunishmentModal(web::WebResponse res){
 
 class RepliesManager {
     public:
-    ModerationPermissions modPermissions;
+    ModerationPermissions modPermissions = (ModerationPermissions)Mod::get()->getSavedValue<int64_t>("moderation_permissions");
     std::map<std::string,ReplyCache> replyCache = {};
     std::map<int,ReplyCache> replyHistoryCache = {};
     std::vector<std::string> votedOn = {};

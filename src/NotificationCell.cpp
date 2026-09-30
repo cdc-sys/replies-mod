@@ -7,7 +7,11 @@ bool NotificationCell::init(){
 
     this->setContentSize({335.f,26.f});
 
-    if (!m_notif.description.empty() || m_notif.type == RepliesNotificationType::Punishment) this->setContentSize({335.f,36.f});
+    if (!m_notif.description.empty()) this->setContentSize({335.f,36.f});
+    
+    if (m_notif.type == RepliesNotificationType::Punishment) {
+        this->setContentSize({335.f,46.f});
+    }
 
     if (!m_notif.read) m_bgColor = Highlighted;
 
@@ -115,7 +119,7 @@ bool NotificationCell::init(){
         titleLabel->setAlignment(geode::Label::Alignment::Left);
         titleLabel->setLimitLabelWidth(267.f,0.45f,0.01f);
         titleLabel->setAnchorPoint({0,0.5});
-        titleLabel->setPosition({this->getContentWidth()/16+15.f,this->getContentHeight()/2+7.f});
+        titleLabel->setPosition({this->getContentWidth()/16+15.f,this->getContentHeight()/2+12.f});
         this->addChild(titleLabel);
 
         auto expiryLabel = geode::Label::create("bigFont.fnt");
@@ -124,8 +128,16 @@ bool NotificationCell::init(){
         expiryLabel->setAlignment(geode::Label::Alignment::Left);
         expiryLabel->setLimitLabelWidth(267.f,0.35f,0.01f);
         expiryLabel->setAnchorPoint({0,0.5});
-        expiryLabel->setPosition({this->getContentWidth()/16+15.f,this->getContentHeight()/2-7.f});
+        expiryLabel->setPosition({this->getContentWidth()/16+15.f,this->getContentHeight()/2});
         this->addChild(expiryLabel);
+
+        auto reasonLabel = geode::Label::create("bigFont.fnt");
+        reasonLabel->setRichText(fmt::format("Reason: <cy>{}</c>",m_notif.punishment_reason));
+        reasonLabel->setAlignment(geode::Label::Alignment::Left);
+        reasonLabel->setLimitLabelWidth(267.f,0.35f,0.01f);
+        reasonLabel->setAnchorPoint({0,0.5});
+        reasonLabel->setPosition({this->getContentWidth()/16+15.f,this->getContentHeight()/2-12.f});
+        this->addChild(reasonLabel);
     }
 
     std::string timestamp = toAgoString(m_notif.timestamp/1000);

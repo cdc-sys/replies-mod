@@ -286,7 +286,7 @@ bool ReplyCell::init(bool fromFetch){
     scaleAreaToFit(contentLabel,16.f);
     this->addChild(contentLabel);
 
-    std::string timestamp = (m_reply.from_comment ? m_reply.comment_timestamp+" ago" : toAgoString(m_reply.timestamp/1000));
+    std::string timestamp = (m_reply.from_comment && !m_reply.comment_timestamp.empty() ? m_reply.comment_timestamp+" ago" : toAgoString(m_reply.timestamp/1000));
     auto dateLabel = CCLabelBMFont::create(timestamp.c_str(),"chatFont.fnt");
     dateLabel->setAlignment(kCCTextAlignmentRight);
     dateLabel->setAnchorPoint({1,0});

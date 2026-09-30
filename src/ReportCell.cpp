@@ -118,6 +118,7 @@ bool ReportCell::init(){
 
     auto noteLabel = CCLabelBMFont::create(m_report.note.c_str(),"chatFont.fnt");
     noteLabel->setScale(0.6f);
+    noteLabel->limitLabelWidth(this->getContentWidth()-15.f, 0.6f, 0.01f);
     noteLabel->setPosition({5.f,this->getContentHeight()-25.f});
     noteLabel->setAnchorPoint({0,0.5});
     noteLabel->setAlignment(kCCTextAlignmentLeft);
@@ -145,10 +146,14 @@ bool ReportCell::init(){
 
     auto actionsMenu = CCMenu::create();
 
-    auto sendNoticeSprite = ButtonSprite::create("Send Notice");
+    auto sendNoticeASprite = ButtonSprite::create("Notice (Author)");
+    auto sendNoticeSprite = ButtonSprite::create("Notice (User)");
     auto muteUserSprite = ButtonSprite::create("Mute User");
     auto banUserSprite = ButtonSprite::create("Ban User");
 
+    auto sendNoticeABtn = CCMenuItemExt::createSpriteExtra(sendNoticeASprite, [this](auto){
+        ReplySendNoticeLayer::create(this->m_report.author_name)->show();
+    });
     auto sendNoticeBtn = CCMenuItemExt::createSpriteExtra(sendNoticeSprite, [this](auto){
         ReplySendNoticeLayer::create(this->m_report.account_name)->show();
     });
@@ -161,6 +166,7 @@ bool ReportCell::init(){
         rpul->show();
     });
 
+    actionsMenu->addChild(sendNoticeABtn);
     actionsMenu->addChild(sendNoticeBtn);
     actionsMenu->addChild(muteUserBtn);
     if (RepliesManager::get().modPermissions >= ModerationPermissions::Administrator) actionsMenu->addChild(banUserBtn);
@@ -174,7 +180,7 @@ bool ReportCell::init(){
     actionsMenu->updateLayout();
 
     actionsMenu->setAnchorPoint({0,0.5});
-    actionsMenu->setScale(0.5f);
+    actionsMenu->setScale(0.39f);
     actionsMenu->setPosition({5.f,12.5f});
 
     this->addChild(actionsMenu);

@@ -26,6 +26,13 @@
         "source": "https://github.com/cdc-sys/replies-mod"
     },
 	"settings": {
+		"api-url": {
+			"name":"Server URL",
+			"description":"The URL the mod should use to connect to the servers.",
+			"type":"string",
+            "filter": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ:.-_/0123456789",
+			"default":"https://replies.cdc-sys.com"
+		},
 		"coloured-branches": {
             "name": "Coloured branches",
             "description": "Whether the reply branches should be coloured based on the depth.",

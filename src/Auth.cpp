@@ -158,10 +158,25 @@ class $modify(MyMenuLayer,MenuLayer){
         auto url = fmt::format("{}/auth/test",SERVER_URL);
         this->m_fields->m_webListener.spawn(req.post(url),[this](web::WebResponse res){
             if (!res.ok()){
-                geode::log::error("{}",res.string().unwrap());
-                auto notif = geode::Notification::create("[Replies] Unauthorized.",NotificationIcon::Error);
-                notif->show();
-                Mod::get()->setSavedValue<std::string>("token","");
+                auto json = res.json().unwrapOrDefault();
+                if (res.code() == 401) {
+                    geode::log::error("{}",res.string().unwrap());
+                    auto notif = geode::Notification::create("[Replies] Unauthorized.",NotificationIcon::Error);
+                    notif->show();
+                    Mod::get()->setSavedValue<std::string>("token","");
+                } else {
+                    int code = json["err"]["code"].asInt().unwrapOr(-1);
+                    if (code == 4) {
+                        openPunishmentModal(res);
+                        Mod::get()->setSavedValue<std::string>("token","");
+                    } else if (code == 3) {
+                        auto notif = geode::Notification::create("[Replies] Your mod version is outdated!",NotificationIcon::Warning);
+                        notif->show();
+                    } else {
+                        auto notif = geode::Notification::create("[Replies] Server connection failed!",NotificationIcon::Error);
+                        notif->show();
+                    }
+                }
             } else {
                 // kinda evil but hey i already made the func
                 auto auth = Auth::create(nullptr);

@@ -318,8 +318,14 @@ void ReplyLayer::onUpload(CCObject* sender){
         req.header("Authorization", Mod::get()->getSavedValue<std::string>("token"));
         req.header("mod-version",MOD_VERSION_HEADER);
         auto url = fmt::format("{}/replies/{}",SERVER_URL,m_commentID);
-        req.param("c",m_replyTextInput->getString());
-        if (m_comment) req.param("a",m_comment->m_userName); 
+        req.param("content",m_replyTextInput->getString());
+        if (m_comment) {
+            req.param("comment_info_sent",true); 
+            req.param("comment_author",m_comment->m_userName); 
+            req.param("comment_author_id",m_comment->m_accountID); 
+            req.param("comment_content",m_comment->m_commentString); 
+            req.param("comment_upload_date",m_comment->m_uploadDate); 
+        }
         m_webListener.spawn(req.post(url),[this](web::WebResponse res){
             m_uploadBtn->setEnabled(true);
             if (res.ok()){
