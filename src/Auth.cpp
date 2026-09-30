@@ -191,3 +191,9 @@ class $modify(MyMenuLayer,MenuLayer){
         return true;
     }
 };
+
+$on_mod(Loaded) {
+    listenForSettingChanges<std::string>("api-url", [](std::string value) {
+        Mod::get()->getSaveContainer().erase("token");
+    });
+}

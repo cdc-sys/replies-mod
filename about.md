@@ -7,4 +7,6 @@ The mod that allows you to reply to comments on levels in Geometry Dash, nothing
 
 - Replying to comments.
 - Authentication system that doesn't rely on entering your password anywhere, just sending a gd message (automatically, of course)
+- Reporting comments and viewing report history
+- Notifications.
 - The replies are laid out in branches, so you can easily view multiple layers of replies at once. Sort of like Reddit.

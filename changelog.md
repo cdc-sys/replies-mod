@@ -1,3 +1,8 @@
+# 1.1.1
+- Fix viewing comments from reply history. (if you can call it a fix)
+- Dont kick users out once their mod version is too old.
+- Notifications patch.
+
 # 1.1.0
 - Add reporting system.
 - Add reply history.
