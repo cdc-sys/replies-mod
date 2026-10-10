@@ -45,6 +45,14 @@ bool ReportCell::init(){
     line2->setOpacity(125);
     this->addChild(line2);
 
+    if (m_report.closed) {
+        if (m_report.accepted) {
+            m_bgColor = ReplyBackgroundColor::ReportAccepted;
+        } else {
+            m_bgColor = ReplyBackgroundColor::ReportIgnored;
+        }
+    }
+
     auto bg = CCLayerColor::create();
     switch (m_bgColor){
         case ReplyBackgroundColor::Highlighted: {
@@ -57,6 +65,14 @@ bool ReportCell::init(){
         }
         case ReplyBackgroundColor::Regular: {
             bg->setVisible(false);
+            break;
+        }
+        case ReplyBackgroundColor::ReportAccepted: {
+            bg->setColor({ 0,150,0 });
+            break;
+        }
+        case ReplyBackgroundColor::ReportIgnored: {
+            bg->setColor({ 150,0,0 });
             break;
         }
     }
@@ -144,6 +160,18 @@ bool ReportCell::init(){
     dateLabel->setOpacity(125);
     this->addChild(dateLabel);
 
+    if (m_report.closed) {
+        auto text = fmt::format("{} by {}\n{}",(m_report.accepted ? "accepted" : "ignored"),m_report.closer_name,toAgoString(m_report.closed_at/1000));
+        auto closedDateLabel = CCLabelBMFont::create(text.c_str(),"chatFont.fnt");
+        closedDateLabel->setAlignment(kCCTextAlignmentRight);
+        closedDateLabel->setAnchorPoint({1,1});
+        closedDateLabel->setPosition({this->getContentWidth()-5.f,this->getContentHeight()-20.f});
+        closedDateLabel->setScale(0.45f);
+        closedDateLabel->setColor({0,0,0});
+        closedDateLabel->setOpacity(125);
+        this->addChild(closedDateLabel);
+    }
+
     auto actionsMenu = CCMenu::create();
 
     auto sendNoticeASprite = ButtonSprite::create("Notice (Author)");
@@ -214,7 +242,7 @@ bool ReportCell::init(){
     closeMenu->setPosition({this->getContentWidth()-5.f,this->getContentHeight()-10.f});
     closeMenu->setScale(0.5f);
 
-    this->addChild(closeMenu);
+    if (!m_report.closed) this->addChild(closeMenu);
 
     return true;
 }

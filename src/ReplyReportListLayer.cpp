@@ -2,6 +2,7 @@
 #include "ReportCell.hpp"
 #include "ReplyPunishUserLayer.hpp"
 #include "ReplySendNoticeLayer.hpp"
+#include "ReplySetRoleLayer.hpp"
 
 ReplyReportListLayer* ReplyReportListLayer::create() {
     auto ret = new ReplyReportListLayer();
@@ -30,6 +31,8 @@ bool ReplyReportListLayer::init(){
 
     this->setTitle("Active Reports");
 
+    m_showClosed = Mod::get()->getSavedValue<bool>("reports-show-closed");
+
     auto winSize = CCDirector::sharedDirector()->getWinSize();
 
     auto newSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
@@ -56,17 +59,37 @@ bool ReplyReportListLayer::init(){
     this->m_buttonMenu->addChild(reloadBtn);
 
     auto sortModeMenu = CCMenu::create();
-    std::vector<std::pair<std::string,std::string>> sortingModes = {{"notice","GJ_infoIcon_001.png"},{"mute","GJ_fxOffBtn_001.png"},{"ban","GJ_deleteIcon_001.png"},{"set_role","GJ_diamondsIcon_001.png"}};
+    std::vector<std::pair<std::string,std::string>> sortingModes = {{"closed","GJ_deleteIcon_001.png"},{"notice","GJ_infoIcon_001.png"},{"mute","GJ_fxOffBtn_001.png"},{"ban","accountBtn_blocked_001.png"},{"set_role","GJ_diamondsIcon_001.png"}};
     for (auto sort : sortingModes) {
         if (RepliesManager::get().modPermissions < ModerationPermissions::Administrator && sort.first == "ban") continue;
-        if (sort.first == "set_role") continue;
 
         auto sprite = CCSprite::create("GJ_button_01.png");
+        if (m_showClosed && sort.first == "closed") {
+            sprite = CCSprite::create("GJ_button_02.png");
+        }
         sprite->setScale(0.5f);
 
         auto toggler = CCMenuItemExt::createSpriteExtra(sprite, [this,sort](CCMenuItemSpriteExtra* me) {
             if (sort.first == "notice") {
                 ReplySendNoticeLayer::create()->show();
+            } else if (sort.first == "set_role") {
+                ReplySetRoleLayer::create()->show();
+            } else if (sort.first == "closed") {
+                m_showClosed = !m_showClosed;
+                Mod::get()->setSavedValue<bool>("reports-show-closed", m_showClosed);
+                if (m_showClosed) {
+                    auto sprite = CCSprite::create("GJ_button_02.png");
+                    sprite->setScale(0.5f);
+                    me->setNormalImage(sprite);
+                    me->setContentSize({20.f,20.f});
+                } else {
+                    auto sprite = CCSprite::create("GJ_button_01.png");
+                    sprite->setScale(0.5f);
+                    me->setNormalImage(sprite);
+                    me->setContentSize({20.f,20.f});
+                }
+                m_page = 1;
+                this->loadReplies(true);
             } else {
                 auto rpul = ReplyPunishUserLayer::create(sort.first);
                 rpul->show();
@@ -77,7 +100,6 @@ bool ReplyReportListLayer::init(){
         sortIcon->setScale(12/sortIcon->getContentWidth());
         sortIcon->setPosition({toggler->getContentWidth()/2,toggler->getContentHeight()/2});
         sortIcon->setZOrder(999);
-        if (sort.first == "dislikes") sortIcon->setContentHeight(24.f); // robtop why the fuckkk is your texture fucked up like this
         toggler->addChild(sortIcon);
 
         sortModeMenu->addChild(toggler);
@@ -192,6 +214,7 @@ void ReplyReportListLayer::loadReplies(bool force){
 
     req.header("mod-version",MOD_VERSION_HEADER);
     req.header("Authorization",Mod::get()->getSavedValue<std::string>("token"));
+    req.param("closed",m_showClosed);
     auto url = fmt::format("{}/moderation/reports/{}",SERVER_URL,this->m_page);
     geode::log::info("{}",url);
     m_webListener.spawn(req.get(url),[this,loadingSpinner](web::WebResponse res){

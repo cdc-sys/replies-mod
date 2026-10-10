@@ -48,6 +48,12 @@ struct Report {
     std::string account_name;
     std::string reply_id;
     int64_t timestamp;
+
+    bool closed;
+    bool accepted;
+    int64_t closer_id;
+    int64_t closed_at;
+    std::string closer_name;
 };
 
 enum class RepliesNotificationIcon {
@@ -159,6 +165,11 @@ struct matjson::Serialize<Report>
         report.account_name = value["account_name"].asString().unwrapOr("Unknown");
         report.reply_id = value["reply_id"].asString().unwrapOr("null");
         report.timestamp = geode::utils::numFromString<int64_t>(value["timestamp"].asString().unwrapOr("0")).unwrapOr(0);
+        report.closed = value["closed"].asBool().unwrapOr(false);
+        report.accepted = value["accepted"].asBool().unwrapOr(false);
+        report.closer_id = geode::utils::numFromString<int64_t>(value["closer_id"].asString().unwrapOr("0")).unwrapOr(0);
+        report.closed_at = geode::utils::numFromString<int64_t>(value["closed_at"].asString().unwrapOr("0")).unwrapOr(0);
+        report.closer_name = value["closer_name"].asString().unwrapOr("Unknown");
         return Ok(report);
     }
     static matjson::Value toJson(Report const &value){
@@ -328,7 +339,9 @@ enum class Mode {
 enum ReplyBackgroundColor {
     Highlighted,
     Darker,
-    Regular
+    Regular,
+    ReportAccepted,
+    ReportIgnored
 };
 
 class RepliesBasePaginatedLayer : public geode::Popup {
@@ -370,12 +383,19 @@ static void openPunishmentModal(web::WebResponse res){
 
 //static ModerationPermissions RepliesManager::get().permissions = (ModerationPermissions)Mod::get()->getSavedValue<int64_t>("moderation_permissions");
 
+struct ReplyInfo {
+    int64_t count;
+    bool has_mod;
+};
+
 class RepliesManager {
     public:
     ModerationPermissions modPermissions = (ModerationPermissions)Mod::get()->getSavedValue<int64_t>("moderation_permissions");
     std::map<std::string,ReplyCache> replyCache = {};
     std::map<int,ReplyCache> replyHistoryCache = {};
     std::vector<std::string> votedOn = {};
+    std::map<std::string,Reply> replyDataCache = {};
+    std::map<int,ReplyInfo> replyInfoCache = {};
     bool hasSyncedIcons;
     static RepliesManager& get(){
         static RepliesManager mgr;

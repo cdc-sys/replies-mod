@@ -20,6 +20,8 @@ class ReplyReportListLayer : public RepliesBasePaginatedLayer {
 
     public:
 
+    bool m_showClosed;
+
     int m_page=1;
     int m_maxPages=1;
     int m_totalReplies=0;

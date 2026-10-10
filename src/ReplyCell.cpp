@@ -83,6 +83,13 @@ void scaleAreaToFit(SimpleTextArea* area,float max){
 }
 
 void ReplyCell::fetchContent() {
+    auto rm = &RepliesManager::get();
+    if (rm->replyDataCache.contains(this->m_reply.id)) {
+        this->m_reply = rm->replyDataCache[this->m_reply.id];
+        this->init(true);
+        return;
+    }
+
     auto loadingSpinner = LoadingCircle::create();
     loadingSpinner->setContentSize(this->getContentSize());
     loadingSpinner->setPosition(this->getPosition());
@@ -108,9 +115,11 @@ void ReplyCell::fetchContent() {
         if (res.ok()){
             auto json = res.json().unwrapOrDefault();
             if (json.contains("replies")){
+                auto rm = &RepliesManager::get();
                 auto json_reply = json.as<Reply>().unwrapOrDefault();
                 json_reply.needs_web_fetch = false;
                 this->m_reply = json_reply;
+                rm->replyDataCache[json_reply.id] = json_reply;
                 this->init(true);
             }
         } else {

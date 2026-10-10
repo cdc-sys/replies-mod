@@ -178,11 +178,16 @@ class $modify(MyMenuLayer,MenuLayer){
                     }
                 }
             } else {
+                auto json = res.json().unwrapOrDefault();
+                if (json.contains("token_v2")) {
+                    auto tokenV2 = json["token_v2"].asString().unwrapOr("");
+                    Mod::get()->setSavedValue("token", tokenV2);
+                    Notification::create("[Replies] Token upgrade complete.",NotificationIcon::Success)->show();
+                }
                 // kinda evil but hey i already made the func
                 auto auth = Auth::create(nullptr);
                 auth->retain();
                 auth->send_icons();
-                auto json = res.json().unwrapOrDefault();
                 auto modPerms = json["mod_permission_level"].asInt().unwrapOr(0);
                 RepliesManager::get().modPermissions = (ModerationPermissions)modPerms;
                 Mod::get()->setSavedValue<int64_t>("moderation_permissions", modPerms);
