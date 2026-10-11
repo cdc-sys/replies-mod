@@ -91,9 +91,9 @@ void Auth::step2(std::string& code){
             // success
             auto json = res.json().unwrapOrDefault();
             if (json.contains("token")){
-                Mod::get()->setSavedValue("token", json["token"].asString().unwrap());
+                Mod::get()->setSavedValue("token", json["token"].asString().unwrapOr(""));
                 this->m_loading->fadeOut();
-                this->m_rl->addReplyUI();
+                if (this->m_rl) this->m_rl->addReplyUI();
             }
             if (json["send_icons"].asBool().unwrapOr(false)){
                 this->send_icons();
@@ -109,7 +109,7 @@ void Auth::step1(){
             argon::startAuth(),
             [this](Result<std::string> result) {
                 if (result.isOk()) {
-                    auto token = std::move(result).unwrap();
+                    auto token = std::move(result).unwrapOr("");
                     this->step2(token);
                 } else {
                     this->handleError("There was an error while obtaining your Argon token.");
@@ -160,7 +160,7 @@ class $modify(MyMenuLayer,MenuLayer){
             if (!res.ok()){
                 auto json = res.json().unwrapOrDefault();
                 if (res.code() == 401) {
-                    geode::log::error("{}",res.string().unwrap());
+                    geode::log::error("{}",res.string().unwrapOr(""));
                     auto notif = geode::Notification::create("[Replies] Unauthorized.",NotificationIcon::Error);
                     notif->show();
                     Mod::get()->setSavedValue<std::string>("token","");
