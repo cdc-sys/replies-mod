@@ -31,11 +31,11 @@ protected:
                 auto json = res.json().unwrapOrDefault();
                 if (json.contains("err")){
                     auto errorText = json["err"]["text"].asString().unwrapOr("Unknown");
-                    auto notif = geode::Notification::create(fmt::format("Sending failed: {}",errorText),NotificationIcon::Error);
+                    auto notif = geode::Notification::create(fmt::format("Setting failed: {}",errorText),NotificationIcon::Error);
                     notif->show();
                 }
             } else {
-                auto notif = geode::Notification::create("Successfully sent notice!",NotificationIcon::Success);
+                auto notif = geode::Notification::create("Successfully set role!",NotificationIcon::Success);
                 notif->show();
             }
             this->release();
