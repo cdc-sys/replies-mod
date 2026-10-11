@@ -1,3 +1,6 @@
+# 1.2.1
+- UI patch.
+
 # 1.2.0
 - Add viewing closed reports for moderators.
 - Add visible reply counts on comments (must be toggled on in settings).
