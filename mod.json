@@ -8,7 +8,7 @@
 	},
 	"id": "cdc.replies",
 	"name": "Replies",
-	"version": "v1.1.1",
+	"version": "v1.2.0",
 	"developer": "cdc",
 	"description": "A mod that adds replying to comments.",
 	"resources": {
@@ -34,8 +34,14 @@
 			"default":"https://replies.cdc-sys.com"
 		},
 		"coloured-branches": {
-            "name": "Coloured branches",
+            "name": "Coloured Branches",
             "description": "Whether the reply branches should be coloured based on the depth.",
+            "type": "bool",
+            "default": false
+        },
+		"reply-counts": {
+            "name": "Reply Counts",
+            "description": "Whether to show reply counts on comments or not.",
             "type": "bool",
             "default": false
         }

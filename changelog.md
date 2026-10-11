@@ -1,3 +1,9 @@
+# 1.2.0
+- Add viewing closed reports for moderators.
+- Add visible reply counts on comments (must be toggled on in settings).
+- Add setting people's roles for moderators.
+- Migrate to a new token system (server change).
+
 # 1.1.1
 - Fix viewing comments from reply history. (if you can call it a fix)
 - Dont kick users out once their mod version is too old.

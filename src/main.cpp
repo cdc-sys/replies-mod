@@ -105,7 +105,7 @@ class $modify(MyCommentCell, CommentCell) {
 		this->m_mainLayer->addChild(replyMenu);
 		this->m_mainLayer->addChild(replyInfoMenu);
 
-		this->loadInfo();
+		if (Mod::get()->getSettingValue<bool>("reply-counts")) this->loadInfo();
 	}
 };
 
