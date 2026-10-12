@@ -1,0 +1,250 @@
+#include "ReplyPunishmentListLayer.hpp"
+#include "ReportCell.hpp"
+#include "ReplyPunishUserLayer.hpp"
+#include "ReplySendNoticeLayer.hpp"
+#include "ReplySetRoleLayer.hpp"
+
+ReplyPunishmentListLayer* ReplyPunishmentListLayer::create() {
+    auto ret = new ReplyPunishmentListLayer();
+    if (ret && ret->init()) {
+        ret->autorelease();
+        return ret;
+    }
+    CC_SAFE_DELETE(ret);
+    return nullptr;
+}
+
+void ReplyPunishmentListLayer::show(){
+    auto winSize = CCDirector::sharedDirector()->getWinSize();
+    CCScene::get()->addChild(this);
+    this->setZOrder(CCScene::get()->getHighestChildZ()+1);
+    this->m_mainLayer->setPosition({-this->getContentSize().width/2,winSize.height/2});
+    this->m_mainLayer->runAction(
+        cocos2d::CCEaseElasticOut::create(CCMoveTo::create(0.75f,{winSize.width/2,winSize.height/2}), 0.6f)
+    );
+    this->setOpacity(0);
+    this->runAction(CCFadeTo::create(0.25f,125));
+}
+
+bool ReplyPunishmentListLayer::init(){
+    if (!Popup::init(380,300)) return false; 
+
+    this->setTitle("Active Punishments");
+
+    m_showClosed = Mod::get()->getSavedValue<bool>("punishments-show-closed");
+
+    auto winSize = CCDirector::sharedDirector()->getWinSize();
+
+    auto newSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
+    this->m_closeBtn->setNormalImage(newSprite);
+    this->m_closeBtn->updateSprite();
+    this->m_closeBtn->setPosition({(this->m_buttonMenu->getContentSize().width-winSize.width)/2+22.5f,this->m_buttonMenu->getContentSize().height-15.f});
+    
+
+    m_scrollLayer = geode::ScrollLayer::create({335.f,248.f});
+    m_scrollLayer->setPosition({37.f,16.f});
+    this->m_mainLayer->addChild(m_scrollLayer);
+    
+    auto border = CCScale9Sprite::create("geode.loader/inverseborder.png");
+    border->setContentSize(m_scrollLayer->getContentSize());
+    border->ignoreAnchorPointForPosition(true);
+    border->setPosition({37.f,16.f});
+    border->setAnchorPoint({0,0});
+    this->m_mainLayer->addChild(border);
+
+    auto reloadSpr = CCSprite::createWithSpriteFrameName("GJ_updateBtn_001.png");
+    reloadBtn = CCMenuItemSpriteExtra::create(reloadSpr,this,menu_selector(ReplyPunishmentListLayer::onReload));
+    reloadBtn->setPosition({20.f,280.f});
+    reloadSpr->setScale(0.5f);
+    this->m_buttonMenu->addChild(reloadBtn);
+
+    auto sortModeMenu = CCMenu::create();
+    std::vector<std::pair<std::string,std::string>> sortingModes = {{"closed","GJ_deleteIcon_001.png"},{"mute","GJ_fxOffBtn_001.png"},{"ban","accountBtn_blocked_001.png"}};
+    for (auto sort : sortingModes) {
+        if (RepliesManager::get().modPermissions < ModerationPermissions::Administrator && (sort.first == "ban" || sort.first == "set_role")) continue;
+
+        auto sprite = CCSprite::create("GJ_button_01.png");
+        if (m_showClosed && sort.first == "closed") {
+            sprite = CCSprite::create("GJ_button_02.png");
+        }
+        sprite->setScale(0.5f);
+
+        auto toggler = CCMenuItemExt::createSpriteExtra(sprite, [this,sort](CCMenuItemSpriteExtra* me) {
+            if (sort.first == "notice") {
+                ReplySendNoticeLayer::create()->show();
+            } else if (sort.first == "set_role") {
+                ReplySetRoleLayer::create()->show();
+            } else if (sort.first == "closed") {
+                m_showClosed = !m_showClosed;
+                Mod::get()->setSavedValue<bool>("reports-show-closed", m_showClosed);
+                if (m_showClosed) {
+                    auto sprite = CCSprite::create("GJ_button_02.png");
+                    sprite->setScale(0.5f);
+                    me->setNormalImage(sprite);
+                    me->setContentSize({20.f,20.f});
+                } else {
+                    auto sprite = CCSprite::create("GJ_button_01.png");
+                    sprite->setScale(0.5f);
+                    me->setNormalImage(sprite);
+                    me->setContentSize({20.f,20.f});
+                }
+                m_page = 1;
+                this->loadReplies(true);
+            } else {
+                auto rpul = ReplyPunishUserLayer::create(sort.first);
+                rpul->show();
+            }
+        });
+
+        auto sortIcon = CCSprite::createWithSpriteFrameName(sort.second.c_str());
+        sortIcon->setScale(12/sortIcon->getContentWidth());
+        sortIcon->setPosition({toggler->getContentWidth()/2,toggler->getContentHeight()/2});
+        sortIcon->setZOrder(999);
+        toggler->addChild(sortIcon);
+
+        sortModeMenu->addChild(toggler);
+    }
+
+    auto layout = AxisLayout::create(Axis::Column);
+    layout->setAutoGrowAxis(1.f);
+    layout->setGap(3.f);
+    layout->setAxisReverse(true);
+    sortModeMenu->setLayout(layout);
+    sortModeMenu->updateLayout();
+
+    sortModeMenu->setPosition({20.f,260.f});
+    sortModeMenu->setAnchorPoint({0.5,1});
+
+    this->m_mainLayer->addChild(sortModeMenu);
+
+    auto prevSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
+    auto nextSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
+    nextSprite->setFlipX(true);
+    this->m_prevBtn = CCMenuItemExt::createSpriteExtra(prevSprite, [this](auto btn){
+        this->m_page -= 1;
+        this->loadReplies(false);
+    });
+    this->m_nextBtn = CCMenuItemExt::createSpriteExtra(nextSprite, [this](auto btn){
+        this->m_page += 1;
+        this->loadReplies(false);
+    });
+    this->m_prevBtn->setPosition({-20.f,winSize.height/2.5f});
+    this->m_nextBtn->setPosition({400.f,winSize.height/2.5f});
+    this->m_buttonMenu->addChild(m_prevBtn);
+    this->m_buttonMenu->addChild(m_nextBtn);
+
+    pageLabel = CCLabelBMFont::create("Page ?/? (Total: ?)","chatFont.fnt");
+    pageLabel->limitLabelWidth(200.f, 0.6f, 0.2f);
+    pageLabel->setColor({0,0,0});
+    pageLabel->setOpacity(90);
+    pageLabel->setAlignment(CCTextAlignment::kCCTextAlignmentRight);
+    pageLabel->setAnchorPoint({1,0.5});
+    pageLabel->setPosition({365.f,275.f});
+    this->m_mainLayer->addChild(pageLabel);
+    
+    this->loadReplies(false);
+    return true;
+}
+
+void ReplyPunishmentListLayer::populate(std::vector<Punishment> const& punishments,std::string const& message){
+    if (m_page==1) m_prevBtn->setVisible(false);
+    else m_prevBtn->setVisible(true);
+    if (m_page==m_maxPages) m_nextBtn->setVisible(false);
+    else m_nextBtn->setVisible(true);
+    reloadBtn->setEnabled(true);
+
+    float totalHeight = 0.f;
+    m_scrollLayer->m_contentLayer->removeAllChildren();
+    m_scrollLayer->m_contentLayer->setLayout(
+        geode::ColumnLayout::create()
+            ->setGap(0.f)
+            ->setAxisReverse(true)
+            ->setAxisAlignment(geode::AxisAlignment::End)
+            ->setCrossAxisLineAlignment(geode::AxisAlignment::End)
+    );
+
+    this->_m_darker = true;
+    for (auto punishment : punishments) {
+        /*auto replyCell = ReportCell::create(this,report,(_m_darker ? ReplyBackgroundColor::Darker : ReplyBackgroundColor::Regular));
+        totalHeight += replyCell->getContentHeight();
+        m_scrollLayer->m_contentLayer->addChild(replyCell);
+        this->_m_darker = !this->_m_darker;*/
+    }
+
+    if (totalHeight < m_scrollLayer->getContentHeight()){
+        auto filler = CCLayerColor::create();
+        filler->setContentSize({335.f,m_scrollLayer->getContentHeight()-totalHeight});
+        filler->setColor({0,0,0});
+        filler->setOpacity(120);
+        if (!message.empty()){
+            auto label = CCLabelBMFont::create(message.c_str(),"goldFont.fnt");
+            label->setScale(.5f);
+            filler->addChildAtPosition(label,Anchor::Center);
+        }
+        m_scrollLayer->m_contentLayer->addChild(filler);
+        totalHeight = m_scrollLayer->getContentHeight();
+    }
+    m_scrollLayer->m_contentLayer->setContentSize({335.f,totalHeight});
+    m_scrollLayer->m_contentLayer->updateLayout();
+    m_scrollLayer->moveToTop();
+
+    pageLabel->setString(fmt::format("Page {}/{} (Total: {})",this->m_page,this->m_maxPages,geode::utils::numToAbbreviatedString(this->m_totalReplies)).c_str());
+}
+
+void ReplyPunishmentListLayer::loadReplies(bool force){
+    this->populate({});
+    this->m_nextBtn->setVisible(false);
+    this->reloadBtn->setEnabled(false);
+
+    auto req = web::WebRequest();
+    auto loadingSpinner = LoadingCircle::create();
+    loadingSpinner->setParentLayer(this->m_mainLayer);
+    loadingSpinner->setContentSize(this->m_scrollLayer->getContentSize());
+    loadingSpinner->setPosition(this->m_scrollLayer->getPosition());
+
+    // why do i have to do this?
+    auto spinnerSprite = loadingSpinner->m_sprite;
+    spinnerSprite->setPosition({loadingSpinner->getContentWidth()/2,loadingSpinner->getContentHeight()/2.5f});
+
+    // there's apparently no way to stop the fading without just.. remaking the entire show function LOLLL
+    m_mainLayer->addChild(loadingSpinner);
+    spinnerSprite->runAction(CCRepeatForever::create(CCRotateBy::create(1,360)));
+    spinnerSprite->setBlendFunc({ GL_ONE, GL_ONE });
+    spinnerSprite->setOpacity(200);
+
+    req.header("mod-version",MOD_VERSION_HEADER);
+    req.header("Authorization",Mod::get()->getSavedValue<std::string>("token"));
+    req.param("closed",m_showClosed);
+    auto url = fmt::format("{}/moderation/punishments/{}",SERVER_URL,this->m_page);
+    geode::log::info("{}",url);
+    m_webListener.spawn(req.get(url),[this,loadingSpinner](web::WebResponse res){
+        loadingSpinner->removeFromParent();
+        if (res.ok()){
+            auto json = res.json().unwrapOrDefault();
+            if (json.contains("punishments")){
+                this->m_maxPages = json["total_pages"].asInt().unwrapOr(1);
+                this->m_totalReplies = json["total"].asInt().unwrapOr(0);
+                auto punishments = json["punishments"].asArray().unwrap();
+                auto processedPunishments = std::vector<Punishment>();
+                for (auto _punishment : punishments){
+                    auto punishment = _punishment.as<Punishment>();
+                    processedPunishments.push_back(punishment.unwrap());
+                }
+                this->populate(processedPunishments);
+            }
+        } else {
+            auto json = res.json().unwrapOrDefault();
+            if (json.contains("err")){
+                auto error = json["err"]["text"].asString().unwrapOr("");
+                this->populate({},error);
+            } else {
+                geode::log::error("Failed to load reports: {}",res.string().unwrapOr("Unknown"));
+                this->populate({},"Something went wrong.");
+            }
+        }
+    });
+}
+
+void ReplyPunishmentListLayer::onReload(CCObject* sender){
+    this->loadReplies(true);
+}

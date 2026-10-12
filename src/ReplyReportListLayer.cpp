@@ -3,6 +3,7 @@
 #include "ReplyPunishUserLayer.hpp"
 #include "ReplySendNoticeLayer.hpp"
 #include "ReplySetRoleLayer.hpp"
+#include "ReplyPunishmentListLayer.hpp"
 
 ReplyReportListLayer* ReplyReportListLayer::create() {
     auto ret = new ReplyReportListLayer();
@@ -59,7 +60,7 @@ bool ReplyReportListLayer::init(){
     this->m_buttonMenu->addChild(reloadBtn);
 
     auto sortModeMenu = CCMenu::create();
-    std::vector<std::pair<std::string,std::string>> sortingModes = {{"closed","GJ_deleteIcon_001.png"},{"notice","GJ_infoIcon_001.png"},{"mute","GJ_fxOffBtn_001.png"},{"ban","accountBtn_blocked_001.png"},{"set_role","GJ_diamondsIcon_001.png"}};
+    std::vector<std::pair<std::string,std::string>> sortingModes = {{"closed","GJ_deleteIcon_001.png"},{"notice","GJ_infoIcon_001.png"},{"mute","GJ_fxOffBtn_001.png"},{"ban","accountBtn_blocked_001.png"},{"set_role","GJ_diamondsIcon_001.png"}, {"punishment_list","GJ_listAddBtn_001.png"}};
     for (auto sort : sortingModes) {
         if (RepliesManager::get().modPermissions < ModerationPermissions::Administrator && (sort.first == "ban" || sort.first == "set_role")) continue;
 
@@ -74,6 +75,8 @@ bool ReplyReportListLayer::init(){
                 ReplySendNoticeLayer::create()->show();
             } else if (sort.first == "set_role") {
                 ReplySetRoleLayer::create()->show();
+            } else if (sort.first == "punishment_list") {
+                ReplyPunishmentListLayer::create()->show();
             } else if (sort.first == "closed") {
                 m_showClosed = !m_showClosed;
                 Mod::get()->setSavedValue<bool>("reports-show-closed", m_showClosed);

@@ -56,6 +56,24 @@ struct Report {
     std::string closer_name;
 };
 
+struct Punishment {
+    int64_t id;
+    int64_t author_id;
+    std::string author_name;
+    int64_t timestamp;
+    int64_t account_id;
+    std::string account_name;
+    std::string reason;
+    int64_t length;
+    std::string type;
+    bool cancelled;
+    int64_t cancelled_at;
+    int64_t canceller_id;
+    std::string canceller_name;
+    bool active;
+    IconData icon;
+};
+
 enum class RepliesNotificationIcon {
     Info = 0,
     Check = 1,
@@ -230,6 +248,32 @@ struct matjson::Serialize<RepliesNotification>
     }
 };
 
+template <>
+struct matjson::Serialize<Punishment>
+{
+    static Result<Punishment> fromJson(matjson::Value const &value)
+    {
+        Punishment punishment = Punishment();
+        punishment.id = geode::utils::numFromString<int64_t>(value["id"].asString().unwrapOr("0")).unwrapOr(0);
+        punishment.author_id = geode::utils::numFromString<int64_t>(value["id"].asString().unwrapOr("0")).unwrapOr(0);
+        punishment.author_name = value["author_name"].asString().unwrapOr("Unknown");
+        punishment.timestamp = geode::utils::numFromString<int64_t>(value["id"].asString().unwrapOr("0")).unwrapOr(0);
+        punishment.account_id = geode::utils::numFromString<int64_t>(value["id"].asString().unwrapOr("0")).unwrapOr(0);
+        punishment.account_name = value["account_name"].asString().unwrapOr("Unknown");
+        punishment.reason = value["reason"].asString().unwrapOr("No reason provided.");
+        punishment.length = geode::utils::numFromString<int64_t>(value["id"].asString().unwrapOr("0")).unwrapOr(0);
+        punishment.type = value["type"].asString().unwrapOr("unknown");
+        punishment.cancelled = value["cancelled"].asBool().unwrapOrDefault();
+        punishment.cancelled_at = geode::utils::numFromString<int64_t>(value["id"].asString().unwrapOr("0")).unwrapOr(0);
+        punishment.canceller_id = geode::utils::numFromString<int64_t>(value["id"].asString().unwrapOr("0")).unwrapOr(0);
+        punishment.canceller_name = value["canceller_name"].asString().unwrapOr("Unknown");
+        punishment.active = value["active"].asBool().unwrapOrDefault();
+        if (value.contains("icon")){
+            punishment.icon = value["icon"].as<IconData>().unwrapOrDefault();
+        }
+        return Ok(punishment);
+    }
+};
 
 inline Reply replyFromComment(GJComment* comment,int replies=0){
     Reply reply = Reply();
