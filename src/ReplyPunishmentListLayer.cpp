@@ -30,9 +30,13 @@ void ReplyPunishmentListLayer::show(){
 bool ReplyPunishmentListLayer::init(){
     if (!Popup::init(380,300)) return false; 
 
-    this->setTitle("Active Punishments");
-
     m_showClosed = Mod::get()->getSavedValue<bool>("punishments-show-closed");
+
+    if (m_showClosed) {
+        this->setTitle("Past Punishments");
+    } else {
+        this->setTitle("Active Punishments");
+    }
 
     auto winSize = CCDirector::sharedDirector()->getWinSize();
 
@@ -77,6 +81,11 @@ bool ReplyPunishmentListLayer::init(){
                 ReplySetRoleLayer::create()->show();
             } else if (sort.first == "closed") {
                 m_showClosed = !m_showClosed;
+                if (m_showClosed) {
+                    this->setTitle("Past Punishments");
+                } else {
+                    this->setTitle("Active Punishments");
+                }
                 Mod::get()->setSavedValue<bool>("reports-show-closed", m_showClosed);
                 if (m_showClosed) {
                     auto sprite = CCSprite::create("GJ_button_02.png");

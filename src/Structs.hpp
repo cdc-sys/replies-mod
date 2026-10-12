@@ -302,6 +302,49 @@ inline Reply replyFromComment(GJComment* comment,int replies=0){
     return reply;
 }
 
+inline std::string toLengthString(int64_t timestamp) {
+    auto const fmtPlural = [](auto count, auto unit) {
+        if (count == 1) {
+            return fmt::format("{} {}", count, unit);
+        }
+        return fmt::format("{} {}s", count, unit);
+    };
+    auto value = std::chrono::seconds(timestamp);
+    auto len = value.count();
+    if (len <= 0){
+        return fmt::format("0 seconds");
+    }
+    if (len < 60) {
+        return fmtPlural(len, "second");
+    }
+    len = abs(std::chrono::duration_cast<std::chrono::minutes>(value).count());
+    if (len < 60) {
+        return fmtPlural(len, "minute");
+    }
+    len = abs(std::chrono::duration_cast<std::chrono::hours>(value).count());
+    if (len < 24) {
+        return fmtPlural(len, "hour");
+    }
+    len = abs(std::chrono::duration_cast<std::chrono::days>(value).count());
+    if (len < 31) {
+        return fmtPlural(len, "day");
+    }
+    len = abs(std::chrono::duration_cast<std::chrono::weeks>(value).count());
+    if (len < 4) {
+        return fmtPlural(len, "week");
+    }
+    len = abs(std::chrono::duration_cast<std::chrono::months>(value).count());
+    if (len < 12) {
+        return fmtPlural(len, "month");
+    }
+    len = abs(std::chrono::duration_cast<std::chrono::years>(value).count());
+    if (len >= 1) {
+        return fmtPlural(len, "year");
+    }
+    return fmt::format("this is the secret string");
+}
+
+
 inline std::string toAgoString(int64_t timestamp) {
     auto const fmtPlural = [](auto count, auto unit, bool future) {
         if (count == 1) {

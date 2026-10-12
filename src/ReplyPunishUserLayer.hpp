@@ -83,6 +83,17 @@ protected:
             this->release();
         });
     }
+    void onToggle(CCMenuItemToggler* self){
+        if (self) this->removePunishment = !self->isToggled();
+        this->m_lengthInput->setVisible(!this->removePunishment);
+        this->m_reasonInput->setVisible(!this->removePunishment);
+        
+        if (this->removePunishment) {
+            this->setTitle(fmt::format("Clear {}s",m_type));
+        } else {
+            this->setTitle(fmt::format("New {}",m_type));
+        }
+    }
     bool init() {
         if (!Popup::init(270.f, 200.f))
             return false;
@@ -115,15 +126,7 @@ protected:
         button->m_pNormalImage->setScale(0.6f);
 
         auto toggle = CCMenuItemExt::createToggler(CCSprite::createWithSpriteFrameName("GJ_checkOn_001.png"), CCSprite::createWithSpriteFrameName("GJ_checkOff_001.png"), [this](CCMenuItemToggler* self){
-            this->removePunishment = !self->isToggled();
-            this->m_lengthInput->setVisible(!this->removePunishment);
-            this->m_reasonInput->setVisible(!this->removePunishment);
-            
-            if (this->removePunishment) {
-                this->setTitle(fmt::format("Clear {}s",m_type));
-            } else {
-                this->setTitle(fmt::format("New {}",m_type));
-            }
+            this->onToggle(self);
         });
         toggle->setPosition({240,175});
 
@@ -144,6 +147,20 @@ public:
         auto ret = new ReplyPunishUserLayer();
         ret->m_type = type;
         if (ret->init()) {
+            ret->autorelease();
+            return ret;
+        }
+
+        delete ret;
+        return nullptr;
+    }
+    static ReplyPunishUserLayer* createCancel(const std::string& type, const std::string& user) {
+        auto ret = new ReplyPunishUserLayer();
+        ret->m_type = type;
+        ret->m_user = user;
+        if (ret->init()) {
+            ret->removePunishment = true;
+            ret->onToggle(nullptr);
             ret->autorelease();
             return ret;
         }

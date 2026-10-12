@@ -33,7 +33,7 @@ void ReplyLayer::show(){
     this->setZOrder(CCScene::get()->getHighestChildZ()+1);
     this->m_mainLayer->setPosition({winSize.width/2,-this->getContentSize().height/2});
     this->m_mainLayer->runAction(
-        cocos2d::CCEaseElasticOut::create(CCMoveTo::create(0.75f,{winSize.width/2,winSize.height/2-20.f}), 0.6f)
+        cocos2d::CCEaseElasticOut::create(CCMoveTo::create(0.75,{winSize.width/2,winSize.height/2-20.f}), 0.6f)
     );
     this->setOpacity(0);
     this->runAction(CCFadeTo::create(0.25f,125));
