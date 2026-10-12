@@ -1,3 +1,6 @@
+# 1.2.2
+- Add being able to view the list of punishments for moderators.
+
 # 1.2.1
 - UI patch.
 

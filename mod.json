@@ -8,7 +8,7 @@
 	},
 	"id": "cdc.replies",
 	"name": "Replies",
-	"version": "v1.2.1",
+	"version": "v1.2.2",
 	"developer": "cdc",
 	"description": "A mod that adds replying to comments.",
 	"resources": {
