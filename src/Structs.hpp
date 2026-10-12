@@ -255,17 +255,17 @@ struct matjson::Serialize<Punishment>
     {
         Punishment punishment = Punishment();
         punishment.id = geode::utils::numFromString<int64_t>(value["id"].asString().unwrapOr("0")).unwrapOr(0);
-        punishment.author_id = geode::utils::numFromString<int64_t>(value["id"].asString().unwrapOr("0")).unwrapOr(0);
+        punishment.author_id = geode::utils::numFromString<int64_t>(value["author_id"].asString().unwrapOr("0")).unwrapOr(0);
         punishment.author_name = value["author_name"].asString().unwrapOr("Unknown");
-        punishment.timestamp = geode::utils::numFromString<int64_t>(value["id"].asString().unwrapOr("0")).unwrapOr(0);
-        punishment.account_id = geode::utils::numFromString<int64_t>(value["id"].asString().unwrapOr("0")).unwrapOr(0);
+        punishment.timestamp = geode::utils::numFromString<int64_t>(value["timestamp"].asString().unwrapOr("0")).unwrapOr(0);
+        punishment.account_id = geode::utils::numFromString<int64_t>(value["account_id"].asString().unwrapOr("0")).unwrapOr(0);
         punishment.account_name = value["account_name"].asString().unwrapOr("Unknown");
         punishment.reason = value["reason"].asString().unwrapOr("No reason provided.");
-        punishment.length = geode::utils::numFromString<int64_t>(value["id"].asString().unwrapOr("0")).unwrapOr(0);
+        punishment.length = geode::utils::numFromString<int64_t>(value["length"].asString().unwrapOr("0")).unwrapOr(0);
         punishment.type = value["type"].asString().unwrapOr("unknown");
         punishment.cancelled = value["cancelled"].asBool().unwrapOrDefault();
-        punishment.cancelled_at = geode::utils::numFromString<int64_t>(value["id"].asString().unwrapOr("0")).unwrapOr(0);
-        punishment.canceller_id = geode::utils::numFromString<int64_t>(value["id"].asString().unwrapOr("0")).unwrapOr(0);
+        punishment.cancelled_at = geode::utils::numFromString<int64_t>(value["cancelled_at"].asString().unwrapOr("0")).unwrapOr(0);
+        punishment.canceller_id = geode::utils::numFromString<int64_t>(value["canceller_id"].asString().unwrapOr("0")).unwrapOr(0);
         punishment.canceller_name = value["canceller_name"].asString().unwrapOr("Unknown");
         punishment.active = value["active"].asBool().unwrapOrDefault();
         if (value.contains("icon")){

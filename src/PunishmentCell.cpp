@@ -44,10 +44,23 @@ bool PunishmentCell::init(){
 
     std::string iconTexture = "GJ_infoIcon_001.png";
 
-    auto icon = CCSprite::createWithSpriteFrameName(iconTexture.c_str());
+    /*auto icon = CCSprite::createWithSpriteFrameName(iconTexture.c_str());
     icon->setPosition({this->getContentWidth()/16,this->getContentHeight()/2});
     icon->setScale(15.f/icon->getContentWidth());
-    this->addChild(icon);
+    this->addChild(icon);*/
+
+    auto playerIcon = SimplePlayer::create(m_punishment.icon.type);
+    playerIcon->setPosition({5.f,this->getContentHeight()/2});
+    playerIcon->setScale(0.8f);
+    playerIcon->setColors(GameManager::get()->colorForIdx(m_punishment.icon.primaryColor), GameManager::get()->colorForIdx(m_punishment.icon.secondaryColor));
+    playerIcon->updatePlayerFrame(m_punishment.icon.id, (IconType)m_punishment.icon.type);
+    if (m_punishment.icon.glow) playerIcon->setGlowOutline(GameManager::get()->colorForIdx(m_punishment.icon.glowColor));
+    playerIcon->setAnchorPoint({0.f,0.5f});
+    playerIcon->setContentSize({30.f,30.f});
+    for (auto child : CCArrayExt<CCNode*>(playerIcon->getChildren())){
+        child->ignoreAnchorPointForPosition(true);
+    }
+    this->addChild(playerIcon);
 
     auto titleLabel = CCLabelBMFont::create(m_punishment.account_name.c_str(),"bigFont.fnt");
     titleLabel->setAlignment(kCCTextAlignmentLeft);

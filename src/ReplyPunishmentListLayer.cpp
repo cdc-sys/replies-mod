@@ -3,6 +3,7 @@
 #include "ReplyPunishUserLayer.hpp"
 #include "ReplySendNoticeLayer.hpp"
 #include "ReplySetRoleLayer.hpp"
+#include "PunishmentCell.hpp"
 
 ReplyPunishmentListLayer* ReplyPunishmentListLayer::create() {
     auto ret = new ReplyPunishmentListLayer();
@@ -165,10 +166,10 @@ void ReplyPunishmentListLayer::populate(std::vector<Punishment> const& punishmen
 
     this->_m_darker = true;
     for (auto punishment : punishments) {
-        /*auto replyCell = ReportCell::create(this,report,(_m_darker ? ReplyBackgroundColor::Darker : ReplyBackgroundColor::Regular));
+        auto replyCell = PunishmentCell::create(this,punishment,(_m_darker ? ReplyBackgroundColor::Darker : ReplyBackgroundColor::Regular));
         totalHeight += replyCell->getContentHeight();
         m_scrollLayer->m_contentLayer->addChild(replyCell);
-        this->_m_darker = !this->_m_darker;*/
+        this->_m_darker = !this->_m_darker;
     }
 
     if (totalHeight < m_scrollLayer->getContentHeight()){
@@ -214,7 +215,7 @@ void ReplyPunishmentListLayer::loadReplies(bool force){
 
     req.header("mod-version",MOD_VERSION_HEADER);
     req.header("Authorization",Mod::get()->getSavedValue<std::string>("token"));
-    req.param("closed",m_showClosed);
+    req.param("active",!m_showClosed);
     auto url = fmt::format("{}/moderation/punishments/{}",SERVER_URL,this->m_page);
     geode::log::info("{}",url);
     m_webListener.spawn(req.get(url),[this,loadingSpinner](web::WebResponse res){
