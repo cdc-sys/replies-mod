@@ -38,7 +38,7 @@ class $modify(MyCommentCell, CommentCell) {
 		}
 
 		if (count > 0) {
-			auto label = CCLabelBMFont::create(fmt::format("{} Repl{}",count,(count == 1 ? "y" : "ies")).c_str(),"bigFont.fnt");
+			auto label = CCLabelBMFont::create(fmt::format("{}",count).c_str(),"bigFont.fnt");
 			label->setScale(0.75f);
 			menu->addChild(label);
 		}
