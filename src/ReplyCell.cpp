@@ -298,29 +298,17 @@ bool ReplyCell::init(bool fromFetch){
 
     this->addChild(authorMenu);
 
-    if (moreReplies) return true;
+    if (moreReplies) return true; // stop rendering everything besides the username if its a moreReplies reply
 
-    // come back to this idea later maybe
-    //if (m_reply.likes < 0) return true;
-
-
-    /*auto contentLabel = CCLabelBMFont::create(m_reply.content.c_str(),"chatFont.fnt",200.f,kCCTextAlignmentLeft);
-    contentLabel->setAnchorPoint({0,0.5});
-    contentLabel->setPosition({36.f,13.f});
-    contentLabel->setScale(0.65f);*/
-
-    //auto contentLabel = TextArea::create(m_reply.content,"chatFont.fnt",0.65f,200.f,{0,1},10.f,false);
-    auto contentLabel = SimpleTextArea::create(m_reply.content,"chatFont.fnt",0.65f);
-    contentLabel->setWidth(this->getContentWidth()-70.f);
-    //contentLabel->setMaxLines(2);
-    contentLabel->setWrappingMode(WrappingMode::WORD_WRAP);
-    if (m_reply.content.find(" ")==-1) contentLabel->setWrappingMode(WrappingMode::CUTOFF_WRAP);
+    //auto contentLabel = SimpleTextArea::create(m_reply.content,"chatFont.fnt",0.65f);
+    auto contentLabel = geode::Label::create("chatFont.fnt");
+    contentLabel->setText(m_reply.content);
+    contentLabel->setFitBox({this->getContentWidth()-70.f,16.f},0.65f);
+    if (m_reply.content.find(" ")==-1) contentLabel->setBreakWords(true);
     contentLabel->setPosition({5.f,this->getContentHeight()-18.f});
     if (m_rl && m_rl->m_displayMode==Mode::LargeCells) contentLabel->setPosition({5.f,this->getContentHeight()/2});
     contentLabel->setAnchorPoint({0,1});
     if (m_rl && m_rl->m_displayMode==Mode::LargeCells) contentLabel->setAnchorPoint({0,0.5});
-    //if (contentLabel->getLines().size()>=2) {contentLabel->setScale(0.45f);if (contentLabel->getLines().size()==1){contentLabel->setPositionY(contentLabel->getPositionY()-contentLabel->getScaledContentHeight()/2);}}
-    scaleAreaToFit(contentLabel,16.f);
     this->addChild(contentLabel);
 
     std::string timestamp = (m_reply.from_comment && !m_reply.comment_timestamp.empty() ? m_reply.comment_timestamp+" ago" : toAgoString(m_reply.timestamp/1000));
