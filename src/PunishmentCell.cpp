@@ -57,8 +57,8 @@ bool PunishmentCell::init(){
     auto playerIcon = SimplePlayer::create(m_punishment.icon.type);
     playerIcon->setPosition({5.f,this->getContentHeight()/2});
     playerIcon->setScale(0.8f);
-    playerIcon->setColors(GameManager::get()->colorForIdx(m_punishment.icon.primaryColor), GameManager::get()->colorForIdx(m_punishment.icon.secondaryColor));
     playerIcon->updatePlayerFrame(m_punishment.icon.id, (IconType)m_punishment.icon.type);
+    playerIcon->setColors(GameManager::get()->colorForIdx(m_punishment.icon.primaryColor), GameManager::get()->colorForIdx(m_punishment.icon.secondaryColor));
     if (m_punishment.icon.glow) playerIcon->setGlowOutline(GameManager::get()->colorForIdx(m_punishment.icon.glowColor));
     playerIcon->setAnchorPoint({0.f,0.5f});
     playerIcon->setContentSize({30.f,30.f});

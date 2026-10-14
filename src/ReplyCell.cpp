@@ -235,8 +235,8 @@ bool ReplyCell::init(bool fromFetch){
         auto playerIcon = SimplePlayer::create(m_reply.icon.type);
         playerIcon->setPosition({5.f,this->getContentHeight()-(30.f*0.45f)-4.f});
         playerIcon->setScale(0.45f);
-        playerIcon->setColors(GameManager::get()->colorForIdx(m_reply.icon.primaryColor), GameManager::get()->colorForIdx(m_reply.icon.secondaryColor));
         playerIcon->updatePlayerFrame(m_reply.icon.id, (IconType)m_reply.icon.type);
+        playerIcon->setColors(GameManager::get()->colorForIdx(m_reply.icon.primaryColor), GameManager::get()->colorForIdx(m_reply.icon.secondaryColor));
         if (m_reply.icon.glow) playerIcon->setGlowOutline(GameManager::get()->colorForIdx(m_reply.icon.glowColor));
         for (auto child : CCArrayExt<CCNode*>(playerIcon->getChildren())){
             child->ignoreAnchorPointForPosition(true);
