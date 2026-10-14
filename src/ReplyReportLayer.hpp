@@ -110,8 +110,8 @@ protected:
             menu->addChild(optionContainer);
         }
 
-        menu->setPosition({this->m_mainLayer->getContentWidth()/2,this->m_mainLayer->getContentWidth()/1.5f});
-        menu->setAnchorPoint({0.5,1});
+        menu->setPosition({15.f,this->m_mainLayer->getContentWidth()/1.5f});
+        menu->setAnchorPoint({0,1});
         menu->setScale(0.425f);
         menu->setContentWidth(this->m_mainLayer->getContentWidth());
         
