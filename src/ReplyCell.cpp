@@ -246,6 +246,7 @@ bool ReplyCell::init(bool fromFetch){
     }
 
     auto authorMenu = CCMenu::create();
+    authorMenu->setAnchorPoint({0,0.5});
 
     auto authorLabel = CCLabelBMFont::create(m_reply.author_name.c_str(),"goldFont.fnt");
     if (moreReplies) authorLabel->setString(fmt::format("+ {} Repl{}",m_reply.reply_count,m_reply.reply_count == 1 ? "y" : "ies").c_str());
@@ -267,6 +268,12 @@ bool ReplyCell::init(bool fromFetch){
     authorMenu->addChild(clickableAuthor);
 
     authorMenu->setPosition({playerIconOffset+6.f+(playerIconOffset!=0 ? 2.0f : 0.f),this->getContentHeight()-10.f});
+
+    auto authorMenuLayout = RowLayout::create();
+    authorMenuLayout->setAxisAlignment(AxisAlignment::Start);
+    authorMenuLayout->setGap(5.f);
+    
+    authorMenu->setLayout(authorMenuLayout,true);
 
     this->addChild(authorMenu);
 
