@@ -191,18 +191,20 @@ bool ReplyHistoryLayer::init(){
     return total;
 }*/
 
-void ReplyHistoryLayer::populate(std::vector<Reply> const& replies,std::string const& message){
+void ReplyHistoryLayer::populate(std::vector<Reply> const& replies,std::string const& message, bool fromCache){
     if (m_page==1) m_prevBtn->setVisible(false);
     else m_prevBtn->setVisible(true);
     if (m_page==m_maxPages) m_nextBtn->setVisible(false);
     else m_nextBtn->setVisible(true);
     reloadBtn->setEnabled(true);
 
-    RepliesManager::get().replyHistoryCache[m_accountID].message = message;
-    RepliesManager::get().replyHistoryCache[m_accountID].max_pages = this->m_maxPages;
-    RepliesManager::get().replyHistoryCache[m_accountID].total_replies = this->m_totalReplies;
-    RepliesManager::get().replyHistoryCache[m_accountID].cached[this->m_page].replies = replies;
-    RepliesManager::get().replyHistoryCache[m_accountID].time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
+    if (!fromCache) {
+        RepliesManager::get().replyHistoryCache[m_accountID].message = message;
+        RepliesManager::get().replyHistoryCache[m_accountID].max_pages = this->m_maxPages;
+        RepliesManager::get().replyHistoryCache[m_accountID].total_replies = this->m_totalReplies;
+        RepliesManager::get().replyHistoryCache[m_accountID].cached[this->m_page].replies = replies;
+        RepliesManager::get().replyHistoryCache[m_accountID].time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
+    }
     
     float totalHeight = 0.f;
     m_scrollLayer->m_contentLayer->removeAllChildren();
@@ -251,7 +253,7 @@ void ReplyHistoryLayer::loadReplies(bool force){
         if (now-cache.cached[this->m_page].time<std::chrono::seconds(300)){
             this->m_maxPages = cache.max_pages;
             this->m_totalReplies = cache.total_replies;
-            this->populate(cache.cached[this->m_page].replies,cache.message);
+            this->populate(cache.cached[this->m_page].replies,cache.message,true);
             return;
         } else {
             geode::log::info("updating cache");

@@ -24,7 +24,7 @@ class ReplyHistoryLayer : public RepliesBasePaginatedLayer {
     std::string sortMode="likes";
 
     bool init();
-    void populate(std::vector<Reply> const& replies,std::string const& message="");
+    void populate(std::vector<Reply> const& replies,std::string const& message="", bool fromCache=false);
     void onReload(CCObject* sender);
 
     public:

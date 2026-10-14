@@ -269,6 +269,27 @@ bool ReplyCell::init(bool fromFetch){
 
     authorMenu->setPosition({playerIconOffset+6.f+(playerIconOffset!=0 ? 2.0f : 0.f),this->getContentHeight()-10.f});
 
+    // evil as fuck
+    /*auto fakeCommentCell = new CommentCell("f",200,100);
+    auto fakeComment = GJComment::create();
+    fakeComment->autorelease();
+    fakeComment->m_userScore = GJUserScore::create();
+    fakeComment->m_userScore->autorelease();
+    fakeComment->m_levelID = 1;
+    fakeComment->m_accountID = m_reply.author_id;
+    fakeCommentCell->loadFromComment(fakeComment);
+
+    auto usernameMenu = fakeCommentCell->getChildByIDRecursive("username-menu");
+    if (usernameMenu) {
+        for (auto child : usernameMenu->getChildrenExt()) {
+            if (child->getID() == "username-button") continue;
+            child->removeFromParent();
+            authorMenu->addChild(child);
+        }
+    }
+
+    fakeCommentCell->autorelease();*/
+
     auto authorMenuLayout = RowLayout::create();
     authorMenuLayout->setAxisAlignment(AxisAlignment::Start);
     authorMenuLayout->setGap(5.f);

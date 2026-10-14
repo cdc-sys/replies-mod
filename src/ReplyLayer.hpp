@@ -23,7 +23,7 @@ class ReplyLayer : public RepliesBasePaginatedLayer {
     std::string sortMode="likes";
 
     bool init(std::string const& commentID);
-    void populate(std::vector<Reply> const& replies,std::string const& message="");
+    void populate(std::vector<Reply> const& replies,std::string const& message="", bool fromCache=false);
     float iterate(Reply reply,int replyLevel,Reply parentReply={},int skip=0);
     void onUpload(CCObject* sender);
     void onReload(CCObject* sender);
