@@ -1,3 +1,7 @@
+# 1.2.3
+- Fix white robot icon bug.
+- Fix misaligned report screen on wider displays.
+
 # 1.2.2
 - Add being able to view the list of punishments for moderators.
 
